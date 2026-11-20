@@ -1,23 +1,24 @@
+import type { components } from '@/lib/api.types';
 import { readPreview, writePreview } from '@/features/preview/browser-storage';
-import type { PreviewAvatar } from './presets';
 
-export const readPreviewAvatar = () => readPreview('profile');
+type Avatar = components['schemas']['Avatar'];
 
-export function parsePreviewAvatar(raw: string | null): PreviewAvatar | null {
+export function readPreviewAvatar(): Avatar | null {
+  const raw = readPreview('profile');
   if (!raw) return null;
   try {
-    const data: unknown = JSON.parse(raw);
-    if (typeof data !== 'object' || data === null || !('name' in data) || !('preset' in data)) {
-      return null;
-    }
-    if (typeof data.name !== 'string' || !data.name.trim()) return null;
-    if (data.preset !== 'strawberry' && data.preset !== 'matcha') return null;
-    return { name: data.name.trim(), preset: data.preset };
+    const value: unknown = JSON.parse(raw);
+    if (typeof value !== 'object' || value === null || !('preset' in value)) return null;
+    // The HTML preview stored the same value as name.
+    const displayName = 'displayName' in value ? value.displayName : 'name' in value ? value.name : null;
+    if (typeof displayName !== 'string' || !displayName.trim()) return null;
+    if (value.preset !== 'strawberry' && value.preset !== 'matcha') return null;
+    return { displayName: displayName.trim(), preset: value.preset };
   } catch {
     return null;
   }
 }
 
-export function savePreviewAvatar(avatar: PreviewAvatar) {
-  return writePreview('profile', JSON.stringify(avatar));
+export function savePreviewAvatar(avatar: Avatar) {
+  return writePreview('profile', JSON.stringify({ name: avatar.displayName, preset: avatar.preset }));
 }

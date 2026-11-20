@@ -2,17 +2,21 @@
 
 import Image from 'next/image';
 import { useRef, useState, type FormEvent } from 'react';
-import { usePreviewAccess } from '@/features/auth/preview-account';
-import { savePreviewAvatar } from './preview-avatar';
+import { AccountUnavailable } from '@/features/auth/AccountUnavailable';
+import { useAccountAccess } from '@/features/auth/preview-account';
+import { saveAvatar } from './api';
+import { queueMockScenario } from '@/lib/mock-api';
+import { isMockApi } from '@/lib/api-mode';
 import { PreviewControls } from '@/features/preview/PreviewControls';
-import { usePreviewAction } from '@/features/preview/use-preview-action';
+import { useApiAction } from '@/features/preview/use-api-action';
 import { presets, type Preset } from './presets';
 
 const choices: Preset[] = ['strawberry', 'matcha'];
+const saveScenarios = [['save-error', 'Character save failed'], ['session-expired', 'Session expired']] satisfies ReadonlyArray<readonly [string, string]>;
 
 export function CharacterForm() {
-  const { ready } = usePreviewAccess('/character');
-  const { pending, start } = usePreviewAction();
+  const { ready, error: accountError, retry } = useAccountAccess('/character');
+  const { pending, run } = useApiAction();
   const input = useRef<HTMLInputElement>(null);
   const [name, setName] = useState('');
   const [preset, setPreset] = useState<Preset>('strawberry');
@@ -31,13 +35,19 @@ export function CharacterForm() {
     }
     setError('');
     setScenario('');
-    start(450, () => {
-      if (scenario === 'save-error') setError('Your character couldn’t be saved. Try saving again.');
-      else if (!savePreviewAvatar({ name: displayName, preset })) {
-        setError('Allow browser storage and try saving again.');
+    void run(async signal => {
+      queueMockScenario('avatar', scenario);
+      const result = await saveAvatar({ displayName, preset }, signal);
+      if (signal.aborted) return;
+      if (result.kind === 'saved' || result.kind === 'sign-in-required') retry();
+      else {
+        if (result.kind === 'invalid-input') setInvalidName(Boolean(result.fields?.displayName));
+        setError(result.message);
       }
     });
   }
+
+  if (accountError) return <AccountUnavailable message={accountError} onRetry={retry} />;
 
   return (
     <>
@@ -81,7 +91,7 @@ export function CharacterForm() {
           {pending ? 'Saving…' : 'Save & continue'}
         </button>
       </form>
-      <PreviewControls scenario={scenario} scenarios={[['save-error', 'Character save failed']]} onScenario={setScenario} />
+      <PreviewControls scenario={scenario} scenarios={isMockApi ? saveScenarios : []} onScenario={setScenario} />
     </>
   );
 }

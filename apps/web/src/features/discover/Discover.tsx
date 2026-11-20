@@ -5,22 +5,27 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { BrandMark } from '@/components/BrandMark';
-import { signOutPreview, usePreviewAccess } from '@/features/auth/preview-account';
+import { AccountUnavailable } from '@/features/auth/AccountUnavailable';
+import { signOutPreview, useAccountAccess } from '@/features/auth/preview-account';
+import { isMockApi } from '@/lib/api-mode';
+import { queueMockScenario } from '@/lib/mock-api';
+import { requestStudyRoomTicket } from './api';
 import { enterPreviewRoom } from '@/features/room/preview-room';
 import { presets } from '@/features/avatar/presets';
 import { PreviewControls } from '@/features/preview/PreviewControls';
 import { PreviewTheme } from '@/features/preview/PreviewTheme';
-import { usePreviewAction } from '@/features/preview/use-preview-action';
+import { useApiAction } from '@/features/preview/use-api-action';
 
 const joinScenarios = [
   ['room-full', 'Room full'],
   ['join-error', 'Connection failed'],
+  ['session-expired', 'Session expired'],
 ] satisfies ReadonlyArray<readonly [string, string]>;
 
 export function Discover() {
   const router = useRouter();
-  const { ready, avatar } = usePreviewAccess('/discover');
-  const { pending, start } = usePreviewAction();
+  const { ready, avatar, error: accountError, retry } = useAccountAccess('/discover');
+  const { pending, run } = useApiAction();
   const [scenario, setScenario] = useState('');
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
@@ -28,17 +33,31 @@ export function Discover() {
   function joinRoom() {
     setError('');
     setScenario('');
-    start(650, () => {
-      if (scenario === 'room-full') {
-        setError('Study Room is full. Wait for a spot to open, then try again.');
-      } else if (scenario === 'join-error' || !enterPreviewRoom()) {
-        setError('Couldn’t connect to the Study Room. Try joining again.');
-      } else {
-        router.replace('/rooms/study-room');
+    void run(async signal => {
+      queueMockScenario('join', scenario);
+      const result = await requestStudyRoomTicket({ attemptId: crypto.randomUUID() }, signal);
+      if (signal.aborted) return;
+      switch (result.kind) {
+        case 'sign-in-required':
+        case 'character-required':
+          retry();
+          break;
+        case 'retry':
+          setError(result.message);
+          break;
+        case 'ticket-issued':
+          if (isMockApi && scenario === 'room-full') {
+            setError('Study Room is full. Wait for a spot to open, then try again.');
+          } else if (!enterPreviewRoom()) {
+            setError('Couldn’t open the Study Room on this device. Try joining again.');
+          } else {
+            router.replace('/rooms/study-room');
+          }
       }
     });
   }
 
+  if (accountError) return <AccountUnavailable message={accountError} onRetry={retry} />;
   if (!ready || !avatar) return null;
 
   return (
@@ -57,10 +76,10 @@ export function Discover() {
           <details className="rail-account">
             <summary>
               <Image id="account-avatar" src={presets[avatar.preset].image} width={32} height={32} alt="" unoptimized />
-              <span id="account-name">{avatar.name}</span>
+              <span id="account-name">{avatar.displayName}</span>
             </summary>
             <div className="rail-account-menu">
-              <button className="button quiet small" type="button" onClick={() => { signOutPreview(); }}>Sign out</button>
+              <button className="button quiet small" type="button" onClick={() => { if (!signOutPreview()) setError('Sign-out is unavailable.'); }}>Sign out</button>
             </div>
           </details>
         </aside>
@@ -113,7 +132,7 @@ export function Discover() {
           </div>
         </main>
       </div>
-      <PreviewControls scenario={scenario} scenarios={joinScenarios} onScenario={setScenario} />
+      <PreviewControls scenario={scenario} scenarios={isMockApi ? joinScenarios : []} onScenario={setScenario} />
     </PreviewTheme>
   );
 }

@@ -16,6 +16,10 @@
 
 `pnpm --filter @mini-connecta/web api:generate` สร้าง types จาก snapshot และ `pnpm --filter @mini-connecta/web api:check` ตรวจว่าผล generate ตรงกัน ทำงานจากราก Mini-Connecta
 
+## โหมดเรียก API ระหว่างพัฒนา
+
+ค่าเริ่มต้นคือ mock transport ตอบทั้งสี่ route ด้วย types และ error codes จาก OpenAPI UI ใช้ feature API และ typed client กลาง ตั้ง `NEXT_PUBLIC_API_MODE=real` แล้วรัน dev ใหม่หรือ build ใหม่เพื่อส่ง request ไป `/api/...` บน origin เดิม เมื่อมี backend ให้ตั้ง routing ของ Caddy ตามแบบระบบ ส่วน Google OAuth จริงอยู่ในขั้น 4.2 และการจองที่นั่งของ Colyseus อยู่ในขั้นเชื่อมต่อห้อง
+
 ## Auth และ HTTP contract
 
 - ต่อ Better Auth Node handler ที่ `/api/auth/*` บน Express ก่อน JSON body parser ให้ NestJS จัดการ validation ของ app routes และให้ Web ใช้ Better Auth client สำหรับ sign-in/sign-out Better Auth ใช้ Google ช่องทางเดียว เปิด callback ของ local และ VM ตาม [Deployment](deployment.md) เมื่อ OAuth สำเร็จให้ redirect ไปจุดเริ่มแอป แล้วใช้ `GET /api/me` ตัดสินหน้า

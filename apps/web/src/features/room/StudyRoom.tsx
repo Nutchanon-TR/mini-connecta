@@ -2,7 +2,8 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-import { usePreviewAccess } from '@/features/auth/preview-account';
+import { AccountUnavailable } from '@/features/auth/AccountUnavailable';
+import { useAccountAccess } from '@/features/auth/preview-account';
 import { leavePreviewRoom } from './preview-room';
 import { PreviewControls } from '@/features/preview/PreviewControls';
 import { PreviewTheme } from '@/features/preview/PreviewTheme';
@@ -39,7 +40,7 @@ function MicIcon({ on }: { on: boolean }) {
 }
 
 export function StudyRoom() {
-  const { ready, avatar } = usePreviewAccess('/rooms/study-room');
+  const { ready, avatar, error: accountError, retry } = useAccountAccess('/rooms/study-room');
   const { pending, start, cancel } = usePreviewAction();
   const [scenario, setScenario] = useState('');
   const [connected, setConnected] = useState(true);
@@ -60,6 +61,7 @@ export function StudyRoom() {
     setMic(scenario === 'mic-denied' ? 'blocked' : scenario === 'voice-error' ? 'unavailable' : 'on');
   }
 
+  if (accountError) return <AccountUnavailable message={accountError} onRetry={retry} />;
   if (!ready || !avatar) return null;
 
   const error = mic === 'blocked' || mic === 'unavailable' ? voiceErrors[mic] : '';
@@ -70,7 +72,7 @@ export function StudyRoom() {
           <source srcSet="/assets/library-room-mobile.png" media="(max-width: 640px)" />
           <Image src="/assets/library-room.png" width={1440} height={1000} alt="Isometric preview of the Cosy Library" loading="eager" unoptimized />
         </picture>
-        <RoomHud playerName={avatar.name} onLeave={() => { leavePreviewRoom(); }} />
+        <RoomHud playerName={avatar.displayName} onLeave={() => { leavePreviewRoom(); }} />
         {!connected && (
           <section className="room-reconnect" aria-labelledby="reconnect-title">
             <h2 id="reconnect-title">Connection lost</h2>

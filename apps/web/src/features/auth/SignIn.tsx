@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { PreviewControls } from '@/features/preview/PreviewControls';
 import { usePreviewAction } from '@/features/preview/use-preview-action';
-import { signInPreview, usePreviewAccess } from './preview-account';
+import { isMockApi } from '@/lib/api-mode';
+import { AccountUnavailable } from './AccountUnavailable';
+import { signInPreview, useAccountAccess } from './preview-account';
 
 const signInScenarios = [
   ['auth-cancel', 'Sign-in cancelled'],
@@ -24,13 +26,17 @@ function GoogleIcon() {
 }
 
 export function SignIn() {
-  const { ready } = usePreviewAccess('/login');
+  const { ready, error: accountError, retry } = useAccountAccess('/login');
   const { pending, start, cancel } = usePreviewAction();
   const [scenario, setScenario] = useState('');
   const [error, setError] = useState('');
 
   function signIn() {
     setError('');
+    if (!isMockApi) {
+      setError('Google sign-in is waiting for the provider connection.');
+      return;
+    }
     setScenario('');
     start(700, () => {
       if (scenario === 'auth-cancel') setError(cancelled);
@@ -38,6 +44,8 @@ export function SignIn() {
       else if (!signInPreview()) setError('Allow browser storage and try signing in again.');
     });
   }
+
+  if (accountError) return <AccountUnavailable message={accountError} onRetry={retry} />;
 
   return (
     <>
@@ -56,9 +64,9 @@ export function SignIn() {
             </button>
           )}
         </div>
-        <p className="footnote">Demo sign-in uses a sample account.</p>
+        {isMockApi && <p className="footnote">Demo sign-in uses a sample account.</p>}
       </section>
-      <PreviewControls scenario={scenario} scenarios={signInScenarios} onScenario={setScenario} />
+      <PreviewControls scenario={scenario} scenarios={isMockApi ? signInScenarios : []} onScenario={setScenario} />
     </>
   );
 }

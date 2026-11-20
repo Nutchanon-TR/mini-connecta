@@ -36,11 +36,13 @@ export function PreviewControls({ scenario, scenarios, onScenario, onDisconnect 
           <option value="light">Light</option>
           <option value="dark">Dark</option>
         </select>
-        <label htmlFor="preview-scenario">Next demo action</label>
-        <select id="preview-scenario" value={scenario} onChange={(event) => onScenario(event.target.value)}>
-          <option value="">Normal</option>
-          {scenarios.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-        </select>
+        {scenarios.length > 0 && <>
+          <label htmlFor="preview-scenario">Next demo action</label>
+          <select id="preview-scenario" value={scenario} onChange={(event) => onScenario(event.target.value)}>
+            <option value="">Normal</option>
+            {scenarios.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+        </>}
         {onDisconnect && (
           <button
             type="button"

@@ -1,6 +1,6 @@
 # Mini Connecta — แผน Release 1
 
-สถานะ **ขั้น 3.3 เสร็จแล้ว พร้อมเริ่มขั้น 3.4** · อัปเดต 20 พฤศจิกายน 2026
+สถานะ **ขั้น 3.4 เสร็จแล้ว พร้อมเริ่มขั้น 3.5** · อัปเดต 20 พฤศจิกายน 2026
 
 เป้าหมายคือทำ Study Room 3D รุ่นเล็กให้คนสองคนเปิดเว็บจากคนละเครื่อง เข้าห้องเดียวกัน เห็นกันเดิน และคุยตามระยะได้ ใช้โปรเจกต์นี้ฝึกทำระบบครบตั้งแต่ UI ถึงการ deploy บน VM และเก็บหลักฐานว่าระบบทำงานอย่างไรเมื่อมีโหลดหรือบริการล่ม
 
@@ -65,7 +65,7 @@
 - [x] **3.1** ตั้ง pnpm workspace และเก็บ Git checkpoint แรกใน repo ของ Mini Connecta โดยตรวจว่า repo แม่ไม่มีไฟล์ในโฟลเดอร์นี้ถูก track
 - [x] **3.2** วางหน้าใน `apps/web/src/app/` และโค้ดตาม feature ใต้ `apps/web/src/features/` ให้ route ทำหน้าที่ประกอบหน้าจอ ส่วน logic ของ auth, avatar, discover และ room อยู่ใน feature ของตัวเอง
 - [x] **3.3** ทำ OpenAPI snapshot จากแบบระบบเพื่อ generate types ด้วย `openapi-typescript` และใช้ `openapi-fetch` ใน `apps/web/src/lib/api.ts` ให้แต่ละ feature เรียกผ่าน client กลางและแปลง error เป็นสถานะของ UI เก็บ schema ของ realtime ที่ใช้ร่วมกันใน `packages/shared`
-- [ ] **3.4** ทำ mock ให้ใช้ types จาก OpenAPI snapshot และคืน error ตาม contract เดียวกับ API จริง เช่น ไม่มี session, ไม่มี avatar และ join fail ให้สลับ mock ที่ชั้นเรียก API เพื่อให้ component ใช้ข้อมูลรูปแบบเดิม
+- [x] **3.4** ทำ mock ให้ใช้ types จาก OpenAPI snapshot และคืน error ตาม contract เดียวกับ API จริง เช่น ไม่มี session, ไม่มี avatar และ join fail ให้สลับ mock ที่ชั้นเรียก API เพื่อให้ component ใช้ข้อมูลรูปแบบเดิม
 - [ ] **3.5** เตรียมจุดเปิดและปิด Colyseus/LiveKit ใน feature ห้อง แยก lifecycle ของทั้งคู่ เมื่อ Leave ให้ cleanup connection, audio tracks และ input เมื่อ reload ให้โหลด session และ avatar ตาม flow เดิม
 - [ ] **3.6** ตรวจเส้นทางผู้ใช้ใหม่ ผู้ใช้เดิม และหน้า error ด้วย mock รัน typecheck และ lint ก่อนส่งต่อ
 
@@ -76,6 +76,8 @@
 **ผลตรวจ 3.2** ย้ายหน้า `/login`, `/character`, `/discover` และ `/rooms/study-room` เข้า Next.js App Router แล้ว แยกโค้ดตาม feature และใช้ CSS, ภาพ และสถานะ UI จำลองจาก Demo UI รัน build และ typecheck ผ่าน ตรวจ flow ด้วย Playwright ที่ 1440, 390 และ 320 px
 
 **ผลตรวจ 3.3** มี [OpenAPI snapshot](../apps/api/openapi.snapshot.json), generated types, HTTP client กลางและ schema realtime ตรวจ codegen, typecheck และผลแปลง response ผ่านแล้ว UI ยังใช้ flow จำลองเดิมจนถึงขั้น 3.4
+
+**ผลตรวจ 3.4** UI ใช้ typed API client กับ mock transport เป็นค่าเริ่มต้น ตั้งค่า `NEXT_PUBLIC_API_MODE=real` เพื่อส่ง REST request ไป origin เดิม ตรวจ contract, build และ flow ผู้ใช้ที่ 1440, 390 และ 320 px ผ่าน รวม session หมดอายุและ Join retry
 
 **ผ่านเมื่อ** UI ผ่าน flow ด้วย mock และรู้ว่าจะเปลี่ยน call ไหนไป API จริงทีละตัว จากนั้นเริ่มต่อ auth ในขั้น 4
 

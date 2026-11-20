@@ -1,7 +1,13 @@
 import createClient from 'openapi-fetch';
+import { isMockApi } from './api-mode';
+import { mockApiFetch } from './mock-api';
 import type { components, paths } from './api.types';
 
-export const api = createClient<paths>({ credentials: 'same-origin', cache: 'no-store' });
+export const api = createClient<paths>({
+  credentials: 'same-origin',
+  cache: 'no-store',
+  ...(isMockApi ? { fetch: mockApiFetch } : {}),
+});
 
 type ContractError = components['schemas']['ApiErrorCode'];
 type FailureCode = ContractError | 'network_error' | 'unexpected_response';
