@@ -1,5 +1,22 @@
 {
   "name": "@mini-connecta/web",
   "version": "0.0.0",
-  "private": true
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "16.4.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5.9.3"
+  }
 }
