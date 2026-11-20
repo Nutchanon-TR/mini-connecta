@@ -176,17 +176,17 @@
 - รายงานแสดงผลแต่ละระดับโหลด เทียบกับ SLO ร่าง และระบุข้อจำกัดของเครื่องทดสอบ
 - ทีมตรวจพบความล้มเหลวจาก dashboard และ logs และมีผลซ้อม restore กับ rollback ให้ตรวจซ้ำได้
 
-## R1-09 Deploy บน VM และตรวจจากภายนอก
+## R1-09 Deploy บน VM ของคณะและทำ smoke test
 
 ในฐานะทีมทดสอบ ฉันต้องการ URL ที่เปิดจากนอกเครื่องนักพัฒนาได้ เพื่อทดสอบบัญชี ห้อง และเสียงบนระบบที่ส่งมอบ
 
 **งานย่อย**
 
 - [ ] `R1-09.1` Review diff และผล local ให้ครบ แล้ว push เมื่อ owner อนุมัติ
-- [ ] `R1-09.2` ให้ GitHub Actions รัน checks และ build image ตาม commit SHA
-- [ ] `R1-09.3` ให้ owner ตั้ง DNS, HTTPS, WSS, Google callback และ LiveKit media ports แล้ว deploy image ที่ผ่าน CI
+- [ ] `R1-09.2` ให้ GitHub Actions รัน checks และ build image bundle ตาม commit SHA สำหรับส่งเข้า VM คณะผ่านช่องทางที่ได้รับอนุญาต
+- [ ] `R1-09.3` ให้ owner ตั้ง DNS, HTTPS, WSS, Google callback และ LiveKit media ports ตามนโยบายเครือข่ายคณะ แล้ว deploy image ที่ผ่าน CI
 - [ ] `R1-09.4` รัน migration ครั้งเดียว เช็ก health, dashboard, logs และ backup นอก VM
-- [ ] `R1-09.5` ทำ smoke test จากสองเครื่องคนละเครือข่าย ตั้งแต่ Sign in ถึง Leave แล้วบันทึกผลและ SHA
+- [ ] `R1-09.5` ทำ smoke test จากสองเครื่องบนเครือข่ายที่คณะอนุญาต ตั้งแต่ Sign in ถึง Leave แล้วบันทึกผลและ SHA
 
 **เกณฑ์ตรวจรับ**
 

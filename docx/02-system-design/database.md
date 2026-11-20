@@ -1,6 +1,6 @@
 # Database และเจ้าของข้อมูล
 
-PostgreSQL 17 เป็น source of truth ของบัญชี session และตัวละคร ให้ Hono API เป็นเจ้าของการเข้าถึงข้อมูลระหว่างทำงาน ส่วน Game รับ snapshot ของ avatar จากตั๋วเข้าห้อง
+PostgreSQL 17 เป็น source of truth ของบัญชี session และตัวละคร ให้ NestJS API ใช้ Prisma 7 เป็นเจ้าของการเข้าถึงข้อมูลระหว่างทำงาน ส่วน Game รับ snapshot ของ avatar จากตั๋วเข้าห้อง
 
 ~~~mermaid
 erDiagram
@@ -20,8 +20,8 @@ erDiagram
 
 | ข้อมูล | เจ้าของ schema | กฎ |
 | --- | --- | --- |
-| User, account, session และตาราง auth ที่ adapter ต้องใช้ | Better Auth + Drizzle adapter | ใช้ schema ที่ CLI สร้างจาก config จริง ล็อกใน migration และคง unique/index ของ auth schema |
-| `avatars` | Mini Connecta ผ่าน Drizzle | `user_id` เป็น PK/FK ไป user ด้วย type เดียวกับ auth schema และ `ON DELETE CASCADE` |
+| User, account, session และตาราง auth ที่ adapter ต้องใช้ | Better Auth + Prisma adapter | ใช้ schema ที่ CLI สร้างจาก config จริง ล็อกใน migration และคง unique/index ของ auth schema |
+| `avatars` | Mini Connecta ผ่าน Prisma | `user_id` เป็น PK/FK ไป user ด้วย type เดียวกับ auth schema และ `ON DELETE CASCADE` |
 | `avatars.display_name` | Mini Connecta | `NOT NULL`, ตรวจความยาว 1–16 หลัง trim ใน API และใช้ DB check สำหรับความยาวที่เก็บ |
 | `avatars.preset` | Mini Connecta | `NOT NULL`, check ให้เป็น `strawberry` หรือ `matcha` |
 | `created_at`, `updated_at` | Mini Connecta | `timestamptz`, default ของแถวใหม่เป็นเวลาปัจจุบัน อัปเดต `updated_at` เมื่อเปลี่ยนค่าจริง |
@@ -46,10 +46,10 @@ erDiagram
 
 ## Migration และ backup
 
-1. Generate schema ของ Better Auth จาก config ที่ใช้จริง แล้วรวมกับ Drizzle schema ของแอป ตรวจ migration SQL ก่อน commit
+1. Generate Prisma models ของ Better Auth จาก config ที่ใช้จริง แล้วรวมกับ model ของแอปใน Prisma schema เดียว ใช้ `prisma migrate dev` ใน local และตรวจ migration SQL ก่อน commit หากต้องเพิ่ม DB check ที่กำหนดไว้ ให้ใส่ใน migration SQL และทดสอบ constraint โดยตรง
 2. ลอง migrate จาก DB ว่างและ DB ที่มี session/avatar fixture ตรวจ unique, FK และ upsert ซ้ำ เก็บ migration เป็น versioned files
-3. ให้ job migration เป็น writer เดียวก่อนเปิด API รุ่นใหม่ ใช้ role สำหรับ schema แยกจาก role ของ API เมื่อ release ใช้ข้อมูลจริง ทดสอบบน volume ชั่วคราวก่อนใช้กับข้อมูล playtest
-4. ใช้ `pg_dump` แบบ custom format เก็บนอก VM แบบจำกัดสิทธิ์และเข้ารหัส ดูตารางสำรองและการกู้ใน [Deployment](deployment.md) กู้ลง DB แยกแล้วตรวจว่า schema กับ avatar เปิดได้โดยใช้ release ที่ตรงกัน
+3. ให้ migration job รัน `prisma migrate deploy` หนึ่งครั้งก่อนเปิด API รุ่นใหม่ ใช้ role สำหรับ schema แยกจาก role ของ API เมื่อ release ใช้ข้อมูลจริง ทดสอบบน volume ชั่วคราวก่อนใช้กับข้อมูล playtest
+4. ใช้ `pg_dump` แบบ custom format เก็บนอก VM บน storage ที่คณะอนุญาตแบบจำกัดสิทธิ์และเข้ารหัส ดูตารางสำรองและการกู้ใน [Deployment](deployment.md) กู้ลง DB แยกแล้วตรวจว่า schema กับ avatar เปิดได้โดยใช้ release ที่ตรงกัน
 5. จำกัดสิทธิ์อ่าน DB และ backup ให้กับผู้ดูแล เก็บ auth-related columns เป็นข้อมูลลับ หลีกเลี่ยงการเก็บวันเกิดและอีเมลซ้ำในตาราง avatar ตรวจ behavior ของ OAuth adapter และอย่าขอสิทธิ์ Google เพิ่มเพื่อใช้ในห้อง
 
-[Better Auth Drizzle adapter](https://better-auth.com/docs/adapters/drizzle)
+[Better Auth Prisma adapter](https://better-auth.com/docs/adapters/prisma)

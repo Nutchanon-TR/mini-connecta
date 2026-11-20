@@ -13,18 +13,18 @@
 
 ## Tech stack ที่ใช้ในแบบนี้
 
-Mini Connecta เป็นโปรเจกต์ทดลอง deploy แยกตามขอบเขตในแผน ใช้ฐาน V1 ที่มี flow ห้องและระบบเสียงอยู่แล้ว แบบนี้เลือก **Hono + Drizzle** สำหรับ Release 1 หากภายหลังทีมตัดสินใจนำโค้ดไปต่อใน V2 ให้ทบทวนการเปลี่ยนเป็น NestJS + Prisma + OpenAPI ก่อนย้ายโค้ดจริง [แนวทาง V2](../../../Project-StudyRoom3d/docs/v2-plan.md)
+Mini Connecta ใช้ **NestJS + Prisma + OpenAPI** ตามสแตกแอปของ Connecta V2 ใช้ Better Auth สำหรับ Release 1 และ deploy บน VM on-premises ของคณะ ดู [แผน V2](../../../Project-StudyRoom3d/docs/v2-plan.md) และ [บันทึกส่วนต่าง](../v2-stack-differences.md)
 
 | ส่วน | Stack | เจ้าของงาน |
 | --- | --- | --- |
-| Web | Next.js App Router, React, Tailwind CSS, R3F | UI, scene, local input, API client และ SDK clients |
-| API | Hono, Zod, Hono RPC, Better Auth + Google OAuth | Session, ตัวละคร, ออกตั๋วเข้าห้อง และรับผลวัดจาก browser |
-| Game | Colyseus และ shared movement/map rules | ห้องเดียว ผู้เล่น ความจุ การเดินและ reconnect |
+| Web | Next.js App Router, React, Tailwind CSS, R3F | UI, scene, local input, OpenAPI client (`openapi-typescript` + `openapi-fetch`) และ SDK clients |
+| API | NestJS (Express), `@nestjs/swagger`, Better Auth + Google OAuth, `@nestjs/throttler` | Session, ตัวละคร, ออกตั๋วเข้าห้อง และรับผลวัดจาก browser |
+| Game | Colyseus, Zod สำหรับข้อความ realtime และ shared movement/map rules | ห้องเดียว ผู้เล่น ความจุ การเดินและ reconnect |
 | Voice | LiveKit self-hosted, JS SDK และ Server SDK | WebRTC audio สำหรับห้องเดียว Game ออก token ตามสิทธิ์ |
-| Data | PostgreSQL 17, Drizzle และ Drizzle Kit | User, Google account, session และ avatar |
-| Runtime | Node.js LTS, TypeScript, pnpm, Caddy, Docker Compose | Local และ Linux VM เดียว |
-| Monitoring | Prometheus, Grafana, Alertmanager, Alloy, Loki | Metrics, logs และ alerts |
-| Verification | Vitest, Playwright, k6, Colyseus bots, LiveKit CLI, GitHub Actions และ GHCR | Tests, local load test และ image ตาม commit |
+| Data | PostgreSQL 17, Prisma 7 และ Prisma Migrate | User, Google account, session และ avatar |
+| Runtime | Node.js LTS, TypeScript, pnpm, Caddy, Docker Compose | Local และ Linux VM on-premises ของคณะ |
+| Monitoring | Prometheus, Grafana, Alertmanager, Alloy, Loki และ `@nestjs/terminus` สำหรับ readiness | Metrics, logs และ alerts |
+| Verification | Vitest, Playwright, k6, Colyseus bots, LiveKit CLI และ GitHub Actions | Tests, local load test และ Docker image bundle ตาม commit |
 
 ดูฐานระบบที่นำมาประกอบการออกแบบได้จาก [สถาปัตยกรรม V1](../../../Project-StudyRoom3d/README.md) และ [Compose ของ V1](../../../Project-StudyRoom3d/infra/compose/README.md)
 
@@ -36,7 +36,7 @@ flowchart LR
     Google["Google OAuth"]
     Edge["Caddy HTTPS และ WSS"]
     Web["Next.js web"]
-    API["Hono API และ Better Auth"]
+    API["NestJS API และ Better Auth"]
     Game["Colyseus game"]
     Voice["LiveKit"]
     DB[("PostgreSQL")]
@@ -49,7 +49,7 @@ flowchart LR
     Edge <-->|"game host และ WebSocket"| Game
     Edge <-->|"rtc host และ signaling"| Voice
     Browser <-->|"WebRTC media"| Voice
-    API -->|"Accounts, sessions และ avatars"| DB
+    API -->|"Prisma: accounts, sessions และ avatars"| DB
     API -->|"Internal room lookup"| Game
     Game -->|"Room Service"| Voice
     API -->|"Metrics และ logs"| Obs
@@ -72,4 +72,4 @@ flowchart LR
 - หนึ่ง Study Room และหนึ่ง Cosy Library map ใช้ logical ID `study-room` กับ `cosy-library` ตั้งความจุเริ่มต้น 20 คนก่อนปรับตามผล local รวมถึงผู้ที่อยู่ในช่วง reconnect
 - เริ่มด้วย instance เดียวต่อบริการและ room state ใน memory ตัวละครอยู่ใน DB ใช้ browser cache สำหรับ static asset ตามนโยบายใน [Deployment](deployment.md) รอบนี้ยังไม่ใช้ Redis
 - ค่าร่างที่ทีมจะปรับจากผลทดสอบคือความจุจริง, budget ของ VM และความจำเป็นของ TURN/TLS ในเครือข่ายที่จะใช้ ตำแหน่งผู้เล่นและเสียงชั่วคราวหายได้เมื่อบริการที่ถือ state restart
-- ขั้น 3 ใช้ response/error examples ใน [Backend](backend-api.md) ทำ typed mock และ state ของ UI ก่อนต่อจริงในขั้น 4
+- ขั้น 3 ใช้ response/error examples ใน [Backend](backend-api.md) ทำ OpenAPI snapshot และ typed mock ขั้น 4 ให้ NestJS ออก OpenAPI จาก routes จริงแล้วตรวจให้ตรงกับ contract

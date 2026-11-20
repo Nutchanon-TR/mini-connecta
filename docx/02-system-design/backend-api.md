@@ -6,22 +6,22 @@
 
 | ตำแหน่ง | หน้าที่ |
 | --- | --- |
-| `apps/api` | Mount Better Auth, อ่าน cookie, validate request, บันทึก avatar, ออก join ticket และรับ telemetry |
+| `apps/api` | NestJS controllers/guards, Better Auth handler, OpenAPI, บันทึก avatar, ออก join ticket และรับ telemetry |
 | `apps/game` | รับ ticket, คุมห้องและการเดิน, ออก token เสียง, จัดการ leave/reconnect |
-| `packages/shared` | IDs, Zod schemas ที่ใช้ข้าม service, movement message และ map/collision rules ที่ใช้ร่วมกัน |
-| `packages/db` | Drizzle schema, migrations และ query สำหรับ API |
+| `packages/shared` | IDs, Zod schemas สำหรับ realtime, movement messages และ map/collision rules ที่ใช้ร่วมกัน |
+| `packages/db` | Prisma schema, migrations และ client สำหรับ API |
 | `apps/web` | Feature modules สำหรับ auth, avatar, discover, room และ voice เรียก HTTP client กลางที่ `src/lib/api.ts` |
 
-ใช้ type จาก Zod เป็น DTO ใน mock และ server และใช้ Hono RPC เป็น typed client ตอนต่อ HTTP จริง ส่วน wire state ของ Colyseus มาจาก game schema ห้ามส่ง DB row หรือ cookie เป็น DTO
+ขั้น 3 ทำ OpenAPI snapshot ของ REST contract ด้านล่าง ใช้ `openapi-typescript` สร้าง types ให้ mock และใช้ `openapi-fetch` เป็น HTTP client กลาง ขั้น 4 ให้ NestJS DTO และ `@nestjs/swagger` ออก spec จาก routes จริง แล้ว generate types จาก spec นั้น ตรวจ contract และผล generate ใน CI ใช้ Nest `ValidationPipe` กับ REST และ Zod กับข้อความ realtime เลี่ยงการส่ง Prisma row หรือ cookie เป็น DTO
 
 ## Auth และ HTTP contract
 
-- Better Auth เป็นเจ้าของ `/api/auth/*` และใช้ Google ช่องทางเดียว เปิด callback ของ local และ VM ตาม [Deployment](deployment.md) เมื่อ OAuth สำเร็จให้ redirect ไปจุดเริ่มแอป แล้วใช้ `GET /api/me` ตัดสินหน้า
-- API ตรวจ session จาก cookie ในทุก route สำหรับบัญชี ตั้ง HttpOnly และ Secure บน HTTPS ใช้ same origin และตรวจ Origin สำหรับ request ที่แก้สถานะของแอป ให้ Better Auth จัดการ callback/state ของ OAuth
+- ต่อ Better Auth Node handler ที่ `/api/auth/*` บน Express ก่อน JSON body parser ให้ NestJS จัดการ validation ของ app routes และให้ Web ใช้ Better Auth client สำหรับ sign-in/sign-out Better Auth ใช้ Google ช่องทางเดียว เปิด callback ของ local และ VM ตาม [Deployment](deployment.md) เมื่อ OAuth สำเร็จให้ redirect ไปจุดเริ่มแอป แล้วใช้ `GET /api/me` ตัดสินหน้า
+- NestJS guard ตรวจ Better Auth session จาก cookie ในทุก route สำหรับบัญชี ตั้ง HttpOnly และ Secure บน HTTPS ใช้ same origin และตรวจ Origin สำหรับ request ที่แก้สถานะของแอป ให้ Better Auth จัดการ callback/state ของ OAuth
 - ออกจากระบบผ่าน Better Auth แล้วล้าง session state ของ Web ถ้าอยู่ในห้อง ให้ Client ปิด Game และ LiveKit ก่อน sign out UI ใช้ `401 unauthorized` เป็นทางกลับหน้า Sign in
-- Responses ของ session, avatar และ join ใช้ `Cache-Control: no-store` Route ที่เปลี่ยนข้อมูลรับ JSON และ validate schema ที่ขอบ API
+- Responses ของ session, avatar และ join ใช้ `Cache-Control: no-store` Route ที่เปลี่ยนข้อมูลรับ JSON และ validate ที่ขอบ API ใช้ `@nestjs/throttler` กับ Join และ telemetry โดยจำกัดตาม session โดยเริ่มจาก storage ใน memory ของ API instance เดียว
 
-[Better Auth: Hono integration](https://better-auth.com/docs/integrations/hono) · [Google setup](https://better-auth.com/docs/authentication/google)
+[Better Auth: Express integration](https://better-auth.com/docs/integrations/express) · [Google setup](https://better-auth.com/docs/authentication/google) · [NestJS OpenAPI](https://docs.nestjs.com/openapi/introduction) · [openapi-fetch](https://openapi-ts.dev/openapi-fetch/) · [NestJS rate limiting](https://docs.nestjs.com/security/rate-limiting)
 
 | HTTP | Request | Success | Error ที่ UI ใช้ |
 | --- | --- | --- | --- |
