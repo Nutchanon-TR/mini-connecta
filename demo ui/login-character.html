@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fbf4f1">
+  <meta name="color-scheme" content="light dark">
+  <title>Create character · Mini Connecta</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="assets/mini-connecta.css">
+  <link rel="preload" href="assets/matcha.png" as="image">
+  <script src="assets/preview.js" defer></script>
+</head>
+<body class="page-character" data-page="character">
+<div class="auth-layout">
+  <aside class="auth-art" aria-label="Study Room">
+    <div class="auth-art-inner">
+      <h2>A room to study together</h2>
+      <p>Find a desk or walk over to talk.</p>
+      <img src="assets/library-art.webp" alt="Illustration of the Study Room" width="640" height="640">
+    </div>
+  </aside>
+  <main class="auth-main">
+    <div class="auth-content">
+      <span class="brand"><svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><path d="M25.85 17.74A10 10 0 1 1 16 6" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round"/><circle cx="23.66" cy="9.57" r="3.6" fill="var(--tea)"/></svg><span>Mini Connecta</span></span>
+      <form class="form-card" id="character-form" aria-labelledby="page-title">
+        <h1 id="page-title">Create your character</h1>
+        <p class="lede">Choose how you’ll look in the Study Room.</p>
+        <div class="character-options">
+          <div class="character-preview">
+            <img src="assets/strawberry.png" id="character-art" width="145" height="208" alt="Strawberry character">
+          </div>
+          <div class="character-fields">
+            <label for="display-name">Display name</label>
+            <input id="display-name" name="displayName" maxlength="16" autocomplete="nickname" placeholder="e.g. Mai" required>
+            <fieldset>
+              <legend>Choose a look</legend>
+              <label class="preset"><input type="radio" name="preset" value="strawberry" checked><span class="swatch strawberry"></span>Strawberry</label>
+              <label class="preset"><input type="radio" name="preset" value="matcha"><span class="swatch matcha"></span>Matcha</label>
+            </fieldset>
+          </div>
+        </div>
+        <p class="notice error" id="save-error" role="alert" hidden></p>
+        <button class="button primary wide" id="save-character" type="submit">Save &amp; continue</button>
+      </form>
+    </div>
+  </main>
+</div>
+<details class="preview-controls">
+  <summary><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 6h16M4 12h16M4 18h16"/><path d="M8 4v4m8 2v4m-6 2v4"/></svg><span>Preview controls</span></summary>
+  <div class="preview-panel">
+    <label for="preview-theme">Theme</label>
+    <select id="preview-theme">
+      <option value="system">System</option>
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+    </select>
+    <label for="preview-scenario">Next demo action</label>
+    <select id="preview-scenario">
+      <option value="">Normal</option>
+      <option value="save-error">Character save failed</option>
+    </select>
+
+  </div>
+</details>
+</body>
+</html>

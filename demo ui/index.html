@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fbf4f1">
+  <meta name="color-scheme" content="light dark">
+  <title>Sign in · Mini Connecta</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="assets/mini-connecta.css">
+  <script src="assets/preview.js" defer></script>
+</head>
+<body class="page-signIn" data-page="signIn">
+<div class="auth-layout">
+  <aside class="auth-art" aria-label="Study Room">
+    <div class="auth-art-inner">
+      <h2>A room to study together</h2>
+      <p>Find a desk or walk over to talk.</p>
+      <img src="assets/library-art.webp" alt="Illustration of the Study Room" width="640" height="640">
+    </div>
+  </aside>
+  <main class="auth-main">
+    <div class="auth-content">
+      <span class="brand"><svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><path d="M25.85 17.74A10 10 0 1 1 16 6" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round"/><circle cx="23.66" cy="9.57" r="3.6" fill="var(--tea)"/></svg><span>Mini Connecta</span></span>
+      <section class="form-card" aria-labelledby="page-title">
+        <h1 id="page-title">Welcome in</h1>
+        <p class="lede">Sign in to enter the Study Room.</p>
+        <p class="notice error" id="auth-error" role="alert" hidden></p>
+        <div class="auth-actions">
+          <button class="button secondary wide" id="sign-in" type="button"><svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#4285f4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.1v5.1h6.6c3.9-3.6 6.1-8.9 6.1-14.9Z"/><path fill="#34a853" d="M24 44c5.5 0 10.1-1.8 13.5-4.6l-6.6-5.1c-1.8 1.2-4.2 1.9-6.9 1.9-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"/><path fill="#fbbc05" d="M12.6 27.8a12 12 0 0 1 0-7.6v-5.3H5.8a20 20 0 0 0 0 18.2l6.8-5.3Z"/><path fill="#ea4335" d="M24 11.8c3 0 5.7 1 7.8 3l5.9-5.9C34.1 5.7 29.5 4 24 4a20 20 0 0 0-18.2 10.9l6.8 5.3c1.6-4.8 6.1-8.4 11.4-8.4Z"/></svg><span>Continue with Google</span></button>
+          <button class="button quiet wide" id="cancel-sign-in" type="button" hidden>Cancel sign-in</button>
+        </div>
+        <p class="footnote">Demo sign-in uses a sample account.</p>
+      </section>
+    </div>
+  </main>
+</div>
+<details class="preview-controls">
+  <summary><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 6h16M4 12h16M4 18h16"/><path d="M8 4v4m8 2v4m-6 2v4"/></svg><span>Preview controls</span></summary>
+  <div class="preview-panel">
+    <label for="preview-theme">Theme</label>
+    <select id="preview-theme">
+      <option value="system">System</option>
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+    </select>
+    <label for="preview-scenario">Next demo action</label>
+    <select id="preview-scenario">
+      <option value="">Normal</option>
+      <option value="auth-cancel">Sign-in cancelled</option>
+      <option value="auth-error">Sign-in failed</option>
+    </select>
+
+  </div>
+</details>
+</body>
+</html>

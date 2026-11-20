@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#241c29">
+  <meta name="color-scheme" content="light dark">
+  <title>Discover · Mini Connecta</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="assets/mini-connecta.css">
+  <script src="assets/preview.js" defer></script>
+</head>
+<body class="page-discover" data-page="discover">
+<aside class="discover-rail" aria-label="Mini Connecta">
+  <span class="rail-brand" role="img" aria-label="Mini Connecta">
+    <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M25.85 17.74A10 10 0 1 1 16 6" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="23.66" cy="9.57" r="3.6" fill="var(--accent-hover)"/>
+    </svg>
+  </span>
+  <nav aria-label="App">
+    <a href="discover.html" class="app-link" aria-current="page">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5 5-2Z"/>
+      </svg>
+      Discover
+    </a>
+  </nav>
+  <details class="rail-account">
+    <summary>
+      <img id="account-avatar" src="assets/strawberry.png" width="32" height="32" alt="">
+      <span id="account-name"></span>
+    </summary>
+    <div class="rail-account-menu">
+      <button class="button quiet small" id="sign-out" type="button">Sign out</button>
+    </div>
+  </details>
+</aside>
+<main class="discover">
+  <div class="discover-content">
+    <header class="discover-heading">
+      <div>
+        <h1>Find your people</h1>
+        <p>Walk into one of Connecta’s Common rooms, or find an open room.</p>
+      </div>
+      <div class="open-room-search">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/>
+        </svg>
+        <input id="open-room-search" type="search" aria-label="Search open rooms" placeholder="Search open rooms" aria-controls="open-rooms-status">
+      </div>
+    </header>
+
+    <section class="discover-section" aria-labelledby="common-rooms-title">
+      <h2 id="common-rooms-title">Common rooms</h2>
+      <article class="study-card" aria-labelledby="room-title">
+        <div class="study-cover">
+          <img src="assets/library-art.webp" alt="" width="640" height="640">
+          <span>Common room · by Connecta</span>
+        </div>
+        <div class="study-details">
+          <h3 id="room-title">Study Room</h3>
+          <p>Cosy Library · Proximity voice</p>
+        </div>
+        <button class="button primary" type="button" id="join-room" aria-describedby="room-title">Walk in</button>
+        <p class="notice error room-join-error" id="join-error" role="alert" hidden></p>
+      </article>
+    </section>
+
+    <section class="discover-section" aria-labelledby="open-rooms-title">
+      <h2 id="open-rooms-title">Open rooms</h2>
+      <p class="open-rooms-status" id="open-rooms-status" role="status">No open rooms yet.</p>
+    </section>
+  </div>
+</main>
+<details class="preview-controls">
+  <summary><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 6h16M4 12h16M4 18h16"/><path d="M8 4v4m8 2v4m-6 2v4"/></svg><span>Preview controls</span></summary>
+  <div class="preview-panel">
+    <label for="preview-theme">Theme</label>
+    <select id="preview-theme">
+      <option value="system">System</option>
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+    </select>
+    <label for="preview-scenario">Next demo action</label>
+    <select id="preview-scenario">
+      <option value="">Normal</option>
+      <option value="room-full">Room full</option>
+      <option value="join-error">Connection failed</option>
+    </select>
+
+  </div>
+</details>
+</body>
+</html>

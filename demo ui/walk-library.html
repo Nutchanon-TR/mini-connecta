@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#241c29">
+  <meta name="color-scheme" content="light dark">
+  <title>Study Room · Mini Connecta</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="assets/mini-connecta.css">
+  <script src="assets/preview.js" defer></script>
+</head>
+<body class="page-room" data-page="room">
+<main class="room-preview" aria-label="Study Room preview">
+  <picture class="room-scene">
+    <source srcset="assets/library-room-mobile.png" media="(max-width: 640px)">
+    <img src="assets/library-room.png" width="1440" height="1000" alt="Isometric preview of the Cosy Library">
+  </picture>
+  <header class="room-hud">
+    <div class="room-identity">
+      <button type="button" class="room-leave" id="leave-room" aria-label="Leave" title="Leave room">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5H4v14h5m5-14 7 7-7 7M8 12h13"/></svg>
+      </button>
+      <div>
+        <h1>Study Room</h1>
+        <p class="room-meta">
+          <span class="room-online" aria-hidden="true"></span>
+          <span>Cosy Library · 4 here</span>
+          <svg class="room-voice-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Proximity voice"><path d="M11 5 6 9H3v6h3l5 4zM15 9a4 4 0 0 1 0 6m3-9a8 8 0 0 1 0 12"/></svg>
+        </p>
+      </div>
+    </div>
+    <div class="room-presence" role="img" aria-label="4 people in the room">
+      <div class="room-avatars" aria-hidden="true">
+        <span class="room-avatar room-avatar-ploy" title="Ploy (speaking)">P</span>
+        <span class="room-avatar room-avatar-fern" title="Fern">F</span>
+        <span class="room-avatar room-avatar-ken" title="Ken">K</span>
+        <span class="room-avatar room-avatar-self" id="room-avatar-self" title="You">M</span>
+      </div>
+      <span class="room-count" aria-hidden="true">4</span>
+    </div>
+  </header>
+  <section class="room-reconnect" id="reconnect-panel" aria-labelledby="reconnect-title" hidden>
+    <h2 id="reconnect-title">Connection lost</h2>
+    <p id="reconnect-detail" role="status">Try again to return to the Study Room.</p>
+    <button class="button primary" id="retry-room" type="button">Reconnect</button>
+  </section>
+  <div class="room-bottom">
+    <p class="notice error room-notice" id="voice-error" role="alert" hidden></p>
+    <div class="room-dock">
+      <button type="button" class="button hud-button" id="toggle-mic" aria-pressed="false">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-mic-on><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11v1a7 7 0 0 0 14 0v-1m-7 8v3"/></svg><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-mic-off><path d="M3 3l18 18M9 9v3a3 3 0 0 0 5.1 2.1M9 5a3 3 0 0 1 6 1v5m4 0v1a7 7 0 0 1-.6 2.8M5 11v1a7 7 0 0 0 12 4.9M12 19v3"/></svg> <span id="mic-label">Turn mic on</span>
+      </button>
+      <span id="voice-status" role="status">Mic off</span>
+    </div>
+  </div>
+</main>
+<details class="preview-controls">
+  <summary><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ><path d="M4 6h16M4 12h16M4 18h16"/><path d="M8 4v4m8 2v4m-6 2v4"/></svg><span>Preview controls</span></summary>
+  <div class="preview-panel">
+    <label for="preview-theme">Theme</label>
+    <select id="preview-theme">
+      <option value="system">System</option>
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+    </select>
+    <label for="preview-scenario">Next demo action</label>
+    <select id="preview-scenario">
+      <option value="">Normal</option>
+      <option value="mic-denied">Microphone denied</option>
+      <option value="voice-error">Voice unavailable</option>
+    </select>
+    <button type="button" class="button secondary small" id="simulate-disconnect">Simulate disconnect</button>
+  </div>
+</details>
+</body>
+</html>
