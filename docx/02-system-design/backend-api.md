@@ -12,7 +12,9 @@
 | `packages/db` | Prisma schema, migrations และ client สำหรับ API |
 | `apps/web` | Feature modules สำหรับ auth, avatar, discover, room และ voice เรียก HTTP client กลางที่ `src/lib/api.ts` |
 
-ขั้น 3 ทำ OpenAPI snapshot ของ REST contract ด้านล่าง ใช้ `openapi-typescript` สร้าง types ให้ mock และใช้ `openapi-fetch` เป็น HTTP client กลาง ขั้น 4 ให้ NestJS DTO และ `@nestjs/swagger` ออก spec จาก routes จริง แล้ว generate types จาก spec นั้น ตรวจ contract และผล generate ใน CI ใช้ Nest `ValidationPipe` กับ REST และ Zod กับข้อความ realtime เลี่ยงการส่ง Prisma row หรือ cookie เป็น DTO
+ขั้น 3 ใช้ [OpenAPI snapshot](../../apps/api/openapi.snapshot.json) ของ REST contract ด้านล่าง ใช้ `openapi-typescript` สร้าง types ให้ mock และใช้ `openapi-fetch` เป็น HTTP client กลาง ขั้น 4 ให้ NestJS DTO และ `@nestjs/swagger` ออก spec จาก routes จริง แล้ว generate types จาก spec นั้น ตรวจ contract และผล generate ใน CI ใช้ Nest `ValidationPipe` กับ REST และ Zod กับข้อความ realtime เลี่ยงการส่ง Prisma row หรือ cookie เป็น DTO
+
+`pnpm --filter @mini-connecta/web api:generate` สร้าง types จาก snapshot และ `pnpm --filter @mini-connecta/web api:check` ตรวจว่าผล generate ตรงกัน ทำงานจากราก Mini-Connecta
 
 ## Auth และ HTTP contract
 
@@ -95,6 +97,8 @@ Session cookie กับ join ticket มีอายุคนละชุด ห
 [Colyseus reconnection](https://docs.colyseus.io/room/reconnection)
 
 ## Game state และข้อความ
+
+ใช้ [realtime schemas](../../packages/shared/src/realtime.ts) สำหรับตรวจ payload ในขั้นเชื่อมต่อ `voice.request` และ `voice.unavailable` เป็นข้อความที่ไม่มี payload
 
 | ทิศทาง | ข้อความหรือ state | ความหมาย |
 | --- | --- | --- |

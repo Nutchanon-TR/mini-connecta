@@ -6,17 +6,21 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "api:generate": "openapi-typescript ../api/openapi.snapshot.json -o src/lib/api.types.ts",
+    "api:check": "openapi-typescript ../api/openapi.snapshot.json -o src/lib/api.types.ts --check"
   },
   "dependencies": {
     "next": "16.4.6",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "openapi-fetch": "0.17.0"
   },
   "devDependencies": {
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "openapi-typescript": "7.13.0"
   }
 }

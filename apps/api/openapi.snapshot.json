@@ -1,0 +1,727 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Mini Connecta app REST API",
+    "version": "0.1.0",
+    "description": "Release 1 contract snapshot for the Web client and its mock. Better Auth owns /api/auth/* separately."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "security": [
+    {
+      "sessionCookie": []
+    }
+  ],
+  "paths": {
+    "/api/me": {
+      "get": {
+        "operationId": "getCurrentAccount",
+        "summary": "Read the signed-in user and optional avatar",
+        "responses": {
+          "200": {
+            "description": "Current account",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentAccount"
+                },
+                "examples": {
+                  "newAccount": {
+                    "value": {
+                      "user": {
+                        "id": "usr_demo"
+                      },
+                      "avatar": null
+                    }
+                  },
+                  "returningAccount": {
+                    "value": {
+                      "user": {
+                        "id": "usr_demo"
+                      },
+                      "avatar": {
+                        "displayName": "Mook",
+                        "preset": "matcha"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/me/avatar": {
+      "put": {
+        "operationId": "saveAvatar",
+        "summary": "Create or update the signed-in user's avatar",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Avatar"
+              },
+              "examples": {
+                "chooseMatcha": {
+                  "value": {
+                    "displayName": "Mook",
+                    "preset": "matcha"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved avatar",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Avatar"
+                },
+                "examples": {
+                  "saved": {
+                    "value": {
+                      "displayName": "Mook",
+                      "preset": "matcha"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/rooms/study-room/join": {
+      "post": {
+        "operationId": "requestStudyRoomTicket",
+        "summary": "Issue a ticket to the current Study Room instance",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JoinRequest"
+              },
+              "examples": {
+                "walkIn": {
+                  "value": {
+                    "attemptId": "7639db4e-0c1b-4c77-9b7f-a3c0d787da12"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Join ticket. Colyseus checks capacity when a seat is requested.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudyRoomTicket"
+                },
+                "examples": {
+                  "ticket": {
+                    "value": {
+                      "roomId": "study-room",
+                      "gameRoomId": "AbcdEF012",
+                      "gameWsUrl": "ws://localhost:2567",
+                      "joinTicket": "mock-ticket",
+                      "expiresAt": "2030-01-01T00:00:45.000Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "description": "Avatar required",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "avatarRequired": {
+                    "value": {
+                      "error": {
+                        "code": "avatar_required",
+                        "message": "Create a character before joining."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "description": "Application or room unavailable",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "no-store"
+                  ]
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                },
+                "examples": {
+                  "serviceUnavailable": {
+                    "value": {
+                      "error": {
+                        "code": "service_unavailable",
+                        "message": "Service unavailable."
+                      }
+                    }
+                  },
+                  "roomUnavailable": {
+                    "value": {
+                      "error": {
+                        "code": "room_unavailable",
+                        "message": "Study Room is unavailable."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/telemetry/room-attempts": {
+      "post": {
+        "operationId": "recordRoomAttempt",
+        "summary": "Record a start or finish event for a join or voice attempt",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomAttemptEvent"
+              },
+              "examples": {
+                "start": {
+                  "value": {
+                    "phase": "start",
+                    "kind": "join",
+                    "attemptId": "7639db4e-0c1b-4c77-9b7f-a3c0d787da12"
+                  }
+                },
+                "finish": {
+                  "value": {
+                    "phase": "finish",
+                    "kind": "join",
+                    "attemptId": "7639db4e-0c1b-4c77-9b7f-a3c0d787da12",
+                    "outcome": "success",
+                    "durationMs": 920
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Accepted, including a duplicate event."
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "better-auth.session_token",
+        "description": "Browser-managed HttpOnly session cookie. The deployed cookie name may carry the Better Auth secure prefix."
+      }
+    },
+    "schemas": {
+      "AvatarPreset": {
+        "type": "string",
+        "enum": [
+          "strawberry",
+          "matcha"
+        ]
+      },
+      "Avatar": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "displayName",
+          "preset"
+        ],
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$",
+            "description": "Trim leading and trailing whitespace before validating against 1–16 Unicode code points. Control characters are invalid."
+          },
+          "preset": {
+            "$ref": "#/components/schemas/AvatarPreset"
+          }
+        }
+      },
+      "CurrentAccount": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "user",
+          "avatar"
+        ],
+        "properties": {
+          "user": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "avatar": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Avatar"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "JoinRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "attemptId"
+        ],
+        "properties": {
+          "attemptId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "StudyRoomTicket": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "roomId",
+          "gameRoomId",
+          "gameWsUrl",
+          "joinTicket",
+          "expiresAt"
+        ],
+        "properties": {
+          "roomId": {
+            "type": "string",
+            "enum": [
+              "study-room"
+            ]
+          },
+          "gameRoomId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "gameWsUrl": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^wss?://"
+          },
+          "joinTicket": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ApiErrorCode": {
+        "type": "string",
+        "enum": [
+          "validation_error",
+          "unauthorized",
+          "avatar_required",
+          "room_unavailable",
+          "rate_limited",
+          "service_unavailable"
+        ]
+      },
+      "ApiError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "code",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "$ref": "#/components/schemas/ApiErrorCode"
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1
+              },
+              "fields": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "RoomAttemptStart": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "phase",
+          "kind",
+          "attemptId"
+        ],
+        "properties": {
+          "phase": {
+            "type": "string",
+            "enum": [
+              "start"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "join",
+              "voice"
+            ]
+          },
+          "attemptId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "JoinAttemptFinish": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "phase",
+          "kind",
+          "attemptId",
+          "outcome",
+          "durationMs"
+        ],
+        "properties": {
+          "phase": {
+            "type": "string",
+            "enum": [
+              "finish"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "join"
+            ]
+          },
+          "attemptId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "success",
+              "room_full",
+              "already_in_room",
+              "auth_required",
+              "avatar_required",
+              "cancelled",
+              "timeout",
+              "failed"
+            ]
+          },
+          "durationMs": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "VoiceAttemptFinish": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "phase",
+          "kind",
+          "attemptId",
+          "outcome",
+          "durationMs"
+        ],
+        "properties": {
+          "phase": {
+            "type": "string",
+            "enum": [
+              "finish"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "voice"
+            ]
+          },
+          "attemptId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "success",
+              "cancelled",
+              "timeout",
+              "failed"
+            ]
+          },
+          "durationMs": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "RoomAttemptEvent": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/RoomAttemptStart"
+          },
+          {
+            "$ref": "#/components/schemas/JoinAttemptFinish"
+          },
+          {
+            "$ref": "#/components/schemas/VoiceAttemptFinish"
+          }
+        ]
+      }
+    },
+    "responses": {
+      "ValidationError": {
+        "description": "Input failed validation",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            },
+            "examples": {
+              "invalid": {
+                "value": {
+                  "error": {
+                    "code": "validation_error",
+                    "message": "Enter a display name (1–16 characters).",
+                    "fields": {
+                      "displayName": "length"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Session missing or expired",
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "no-store"
+              ]
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            },
+            "examples": {
+              "unauthorized": {
+                "value": {
+                  "error": {
+                    "code": "unauthorized",
+                    "message": "Sign in to continue."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Too many requests",
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "no-store"
+              ]
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            },
+            "examples": {
+              "rateLimited": {
+                "value": {
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Wait a moment and try again."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ServiceUnavailable": {
+        "description": "Service unavailable",
+        "headers": {
+          "Cache-Control": {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "no-store"
+              ]
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ApiError"
+            },
+            "examples": {
+              "unavailable": {
+                "value": {
+                  "error": {
+                    "code": "service_unavailable",
+                    "message": "Try again shortly."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

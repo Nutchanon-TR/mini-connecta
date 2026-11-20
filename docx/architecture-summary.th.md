@@ -1,6 +1,6 @@
 # สรุป Architecture ของ Mini Connecta
 
-สถานะ **ข้อ 3.2** · เว็บ Next.js ใช้ข้อมูลจำลองในเบราว์เซอร์ ห้องใช้ภาพฉากจาก Demo UI
+สถานะ **ข้อ 3.3** · เว็บยังแสดง flow จำลองจาก Demo UI มี OpenAPI snapshot, typed client และ schema realtime สำหรับขั้นถัดไป
 
 หน้าใน `apps/web/src/app` ประกอบ UI ส่วนพฤติกรรมและสถานะอยู่ใน `apps/web/src/features` เส้นทางหลักคือ `/login` → `/character` → `/discover` → `/rooms/study-room` ผู้ใช้ที่มีตัวละครแล้วไป Discover ได้เลย
 
@@ -18,13 +18,19 @@
 | [app/discover/page.tsx](../apps/web/src/app/discover/page.tsx) | เปิดหน้า Discover |
 | [app/rooms/study-room/page.tsx](../apps/web/src/app/rooms/study-room/page.tsx) | เปิดหน้า Study Room |
 | [components/BrandMark.tsx](../apps/web/src/components/BrandMark.tsx) | โลโก้ที่ใช้ร่วมกันในหน้า Auth และ Discover |
+| [lib/api.types.ts](../apps/web/src/lib/api.types.ts) | Types ของ REST endpoints ที่ generate จาก OpenAPI |
+| [lib/api.ts](../apps/web/src/lib/api.ts) | `openapi-fetch` client กลางและแปลง HTTP/network errors |
+| [features/auth/api.ts](../apps/web/src/features/auth/api.ts) | อ่านบัญชีและแปลงผลเป็นสถานะ Sign in หรือ Create Character |
 | [features/auth/AuthLayout.tsx](../apps/web/src/features/auth/AuthLayout.tsx) | โครงหน้าร่วมของ Sign in และ Create Character |
 | [features/auth/SignIn.tsx](../apps/web/src/features/auth/SignIn.tsx) | ปุ่ม Google Sign-in จำลองและสถานะรอ ยกเลิก หรือผิดพลาด |
 | [features/auth/preview-account.ts](../apps/web/src/features/auth/preview-account.ts) | เก็บสถานะ Sign in จำลองและพาไปหน้าที่ตรงกับบัญชีและสถานะห้อง |
+| [features/avatar/api.ts](../apps/web/src/features/avatar/api.ts) | บันทึก avatar ผ่าน API และส่งสถานะ validation ให้ UI |
 | [features/avatar/CharacterForm.tsx](../apps/web/src/features/avatar/CharacterForm.tsx) | กรอกชื่อ เลือก preset พรีวิว และบันทึกตัวละคร |
 | [features/avatar/presets.ts](../apps/web/src/features/avatar/presets.ts) | รายการ preset รูปตัวละคร และ types ของตัวละคร |
 | [features/avatar/preview-avatar.ts](../apps/web/src/features/avatar/preview-avatar.ts) | อ่าน ตรวจรูปแบบ และบันทึกตัวละครใน localStorage |
+| [features/discover/api.ts](../apps/web/src/features/discover/api.ts) | ขอตั๋ว Join และบอกให้ Sign in, สร้างตัวละคร หรือลองใหม่ตามผล |
 | [features/discover/Discover.tsx](../apps/web/src/features/discover/Discover.tsx) | แสดง Common Study Room หนึ่งใบ สถานะว่างของ Open rooms และปุ่ม Walk in |
+| [features/room/api.ts](../apps/web/src/features/room/api.ts) | ส่ง telemetry ของ Join และ Voice แบบ best effort |
 | [features/room/StudyRoom.tsx](../apps/web/src/features/room/StudyRoom.tsx) | แสดงภาพฉากและจำลองสถานะไมค์ การเชื่อมต่อ และ Leave |
 | [features/room/RoomHud.tsx](../apps/web/src/features/room/RoomHud.tsx) | แสดงชื่อห้อง ปุ่ม Leave และแถบผู้เล่นจำลอง |
 | [features/room/preview-room.ts](../apps/web/src/features/room/preview-room.ts) | อ่าน ตั้ง และล้างสถานะเข้าห้องใน sessionStorage ของแท็บ |
@@ -42,13 +48,16 @@
 | [pnpm-lock.yaml](../pnpm-lock.yaml) | ล็อกเวอร์ชัน dependencies |
 | [.npmrc](../.npmrc) | ตั้ง pnpm แบบ hoisted สำหรับแชร์ dependency ใน workspace |
 | [.gitignore](../.gitignore) | ระบุไฟล์ env และผล build ที่เป็นของเครื่องพัฒนา |
-| [apps/web/package.json](../apps/web/package.json) | dependencies และคำสั่ง dev, build, start, typecheck |
+| [apps/web/package.json](../apps/web/package.json) | dependencies และคำสั่งรันเว็บ, typecheck, generate และตรวจ OpenAPI types |
 | [apps/web/tsconfig.json](../apps/web/tsconfig.json) | ตั้ง TypeScript เคร่งครัดและ alias `@/` |
 | [apps/web/next-env.d.ts](../apps/web/next-env.d.ts) | ไฟล์ types ที่ Next.js สร้างให้ |
 | [apps/web/public/assets](../apps/web/public/assets) | ฟอนต์ Nunito, ภาพปก Library, รูปสอง preset และภาพห้องสำหรับเดสก์ท็อปกับมือถือ |
 | [apps/api/package.json](../apps/api/package.json) | จอง package สำหรับ REST API |
+| [apps/api/openapi.snapshot.json](../apps/api/openapi.snapshot.json) | REST contract ของบัญชี, avatar, ตั๋ว Join และ telemetry |
 | [apps/game/package.json](../apps/game/package.json) | จอง package สำหรับ Colyseus |
-| [packages/shared/package.json](../packages/shared/package.json) | จอง package สำหรับ types และ schema ที่ใช้ร่วมกัน |
+| [packages/shared/package.json](../packages/shared/package.json) | Export realtime schema และกำหนด dependency Zod |
+| [packages/shared/tsconfig.json](../packages/shared/tsconfig.json) | ตั้ง TypeScript สำหรับตรวจ shared package |
+| [packages/shared/src/realtime.ts](../packages/shared/src/realtime.ts) | Zod schema และ types ของตั๋วเข้าห้อง, movement, player state, voice messages และ Join errors |
 | [packages/db/package.json](../packages/db/package.json) | จอง package สำหรับ Prisma และ migrations |
 
 ## `demo ui`
