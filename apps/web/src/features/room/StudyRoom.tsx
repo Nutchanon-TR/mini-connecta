@@ -4,10 +4,11 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { AccountUnavailable } from '@/features/auth/AccountUnavailable';
 import { useAccountAccess } from '@/features/auth/preview-account';
-import { leavePreviewRoom } from './preview-room';
+import { isMockApi } from '@/lib/api-mode';
+import { useRoomGame } from './use-room-game';
+import { useRoomVoice } from './use-room-voice';
 import { PreviewControls } from '@/features/preview/PreviewControls';
 import { PreviewTheme } from '@/features/preview/PreviewTheme';
-import { usePreviewAction } from '@/features/preview/use-preview-action';
 import { RoomHud } from './RoomHud';
 
 const voiceScenarios = [
@@ -16,6 +17,7 @@ const voiceScenarios = [
 ] satisfies ReadonlyArray<readonly [string, string]>;
 
 const micLabels = {
+  connecting: 'Connecting voice…',
   off: 'Mic off',
   on: 'Mic on',
   blocked: 'Mic blocked',
@@ -41,28 +43,17 @@ function MicIcon({ on }: { on: boolean }) {
 
 export function StudyRoom() {
   const { ready, avatar, error: accountError, retry } = useAccountAccess('/rooms/study-room');
-  const { pending, start, cancel } = usePreviewAction();
-  const [scenario, setScenario] = useState('');
-  const [connected, setConnected] = useState(true);
-  const [mic, setMic] = useState<keyof typeof micLabels>('off');
-
-  function disconnect() {
-    cancel();
-    setConnected(false);
-    setMic('off');
-  }
-
-  function toggleMic() {
-    if (mic === 'on') {
-      setMic('off');
-      return;
-    }
-    setScenario('');
-    setMic(scenario === 'mic-denied' ? 'blocked' : scenario === 'voice-error' ? 'unavailable' : 'on');
-  }
-
   if (accountError) return <AccountUnavailable message={accountError} onRetry={retry} />;
   if (!ready || !avatar) return null;
+
+  return <RoomView playerName={avatar.displayName} onAccountChanged={retry} />;
+}
+
+function RoomView({ playerName, onAccountChanged }: { playerName: string; onAccountChanged: () => void }) {
+  const { status, simulateDisconnect, reconnect, leave } = useRoomGame({ onAccountChanged });
+  const connected = status.kind === 'ready';
+  const { mic, pending, toggleMic } = useRoomVoice(connected ? status.game : null);
+  const [scenario, setScenario] = useState('');
 
   const error = mic === 'blocked' || mic === 'unavailable' ? voiceErrors[mic] : '';
   return (
@@ -72,28 +63,35 @@ export function StudyRoom() {
           <source srcSet="/assets/library-room-mobile.png" media="(max-width: 640px)" />
           <Image src="/assets/library-room.png" width={1440} height={1000} alt="Isometric preview of the Cosy Library" loading="eager" unoptimized />
         </picture>
-        <RoomHud playerName={avatar.displayName} onLeave={() => { leavePreviewRoom(); }} />
+        <RoomHud playerName={playerName} onLeave={leave} />
         {!connected && (
           <section className="room-reconnect" aria-labelledby="reconnect-title">
-            <h2 id="reconnect-title">Connection lost</h2>
-            <p role="status">{pending ? 'Connecting to the Study Room.' : 'Try again to return to the Study Room.'}</p>
-            <button className="button primary" type="button" onClick={() => start(700, () => setConnected(true))} disabled={pending}>
-              {pending ? 'Reconnecting…' : 'Reconnect'}
-            </button>
+            <h2 id="reconnect-title">
+              {status.kind === 'connecting' ? 'Connecting…' : 'Connection lost'}
+            </h2>
+            <p role="status">
+              {status.kind === 'disconnected' ? status.message : 'Connecting to the Study Room.'}
+            </p>
+            {status.kind === 'disconnected' && (
+              <button className="button primary" type="button" onClick={reconnect}>Reconnect</button>
+            )}
           </section>
         )}
         <div className="room-bottom">
-          {error && <p className="notice error room-notice" role="alert">{error}</p>}
+          {connected && error && <p className="notice error room-notice" role="alert">{error}</p>}
           <div className="room-dock">
-            <button className="button hud-button" type="button" aria-pressed={mic === 'on'} onClick={toggleMic} disabled={!connected}>
+            <button className="button hud-button" type="button" aria-pressed={mic === 'on'} onClick={() => {
+              void toggleMic(scenario);
+              setScenario('');
+            }} disabled={!connected || pending || mic === 'connecting'}>
               <MicIcon on={mic === 'on'} />
               {mic === 'on' ? 'Turn mic off' : 'Turn mic on'}
             </button>
-            <span id="voice-status" role="status">{connected ? micLabels[mic] : 'Room disconnected'}</span>
+            <span id="voice-status" role="status">{connected ? micLabels[mic] : status.kind === 'disconnected' ? 'Room disconnected' : 'Connecting to room…'}</span>
           </div>
         </div>
       </main>
-      <PreviewControls scenario={scenario} scenarios={voiceScenarios} onScenario={setScenario} onDisconnect={disconnect} />
+      <PreviewControls scenario={scenario} scenarios={isMockApi ? voiceScenarios : []} onScenario={setScenario} onDisconnect={isMockApi && connected ? simulateDisconnect : undefined} />
     </PreviewTheme>
   );
 }

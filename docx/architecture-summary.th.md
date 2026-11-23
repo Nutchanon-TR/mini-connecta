@@ -1,6 +1,6 @@
 # สรุป Architecture ของ Mini Connecta
 
-สถานะ **ข้อ 3.4** · เว็บเรียก typed client กับ mock API ตาม OpenAPI เป็นค่าเริ่มต้น
+สถานะ **ข้อ 3.5** · ห้องมี lifecycle แยกสำหรับ Colyseus และ LiveKit โดยใช้ mock เป็นค่าเริ่มต้น
 
 หน้าใน `apps/web/src/app` ประกอบ UI ส่วนพฤติกรรมและสถานะอยู่ใน `apps/web/src/features` เส้นทางหลักคือ `/login` → `/character` → `/discover` → `/rooms/study-room` ผู้ใช้ที่มีตัวละครแล้วไป Discover ได้เลย
 
@@ -20,7 +20,7 @@
 | [components/BrandMark.tsx](../apps/web/src/components/BrandMark.tsx) | โลโก้ที่ใช้ร่วมกันในหน้า Auth และ Discover |
 | [lib/api.types.ts](../apps/web/src/lib/api.types.ts) | Types ของ REST endpoints ที่ generate จาก OpenAPI |
 | [lib/api.ts](../apps/web/src/lib/api.ts) | Typed client กลาง เลือก mock หรือ network และแปลง HTTP errors |
-| [lib/api-mode.ts](../apps/web/src/lib/api-mode.ts) | อ่าน `NEXT_PUBLIC_API_MODE` เพื่อเลือกโหมดรับส่งข้อมูล |
+| [lib/api-mode.ts](../apps/web/src/lib/api-mode.ts) | อ่าน `NEXT_PUBLIC_API_MODE` สำหรับเลือก mock หรือการเชื่อมต่อจริงทั้ง REST, Game และ Voice |
 | [lib/mock-api.ts](../apps/web/src/lib/mock-api.ts) | ตอบ REST routes ด้วย DTO, status และ error ตาม OpenAPI |
 | [features/auth/api.ts](../apps/web/src/features/auth/api.ts) | อ่านบัญชีและแปลงผลเป็นสถานะ Sign in หรือ Create Character |
 | [features/auth/AuthLayout.tsx](../apps/web/src/features/auth/AuthLayout.tsx) | โครงหน้าร่วมของ Sign in และ Create Character |
@@ -32,11 +32,15 @@
 | [features/avatar/presets.ts](../apps/web/src/features/avatar/presets.ts) | รูปและชื่อ preset ที่อิง enum จาก OpenAPI |
 | [features/avatar/preview-avatar.ts](../apps/web/src/features/avatar/preview-avatar.ts) | อ่านและบันทึก avatar จำลองโดยรองรับรูปแบบ storage ของต้นแบบ |
 | [features/discover/api.ts](../apps/web/src/features/discover/api.ts) | ขอตั๋ว Join และบอกให้ Sign in, สร้างตัวละคร หรือลองใหม่ตามผล |
-| [features/discover/Discover.tsx](../apps/web/src/features/discover/Discover.tsx) | แสดง Study Room และขอตั๋วผ่าน Join API เมื่อกด Walk in |
+| [features/discover/Discover.tsx](../apps/web/src/features/discover/Discover.tsx) | แสดง Study Room ขอและส่งต่อตั๋วในหน่วยความจำเมื่อกด Walk in |
 | [features/room/api.ts](../apps/web/src/features/room/api.ts) | ส่ง telemetry ของ Join และ Voice แบบ best effort |
-| [features/room/StudyRoom.tsx](../apps/web/src/features/room/StudyRoom.tsx) | แสดงภาพฉากและจำลองสถานะไมค์ การเชื่อมต่อ และ Leave |
+| [features/room/StudyRoom.tsx](../apps/web/src/features/room/StudyRoom.tsx) | ตรวจบัญชีก่อนเปิดฉากตัวอย่าง แสดงสถานะห้องและไมค์จาก hooks |
 | [features/room/RoomHud.tsx](../apps/web/src/features/room/RoomHud.tsx) | แสดงชื่อห้อง ปุ่ม Leave และแถบผู้เล่นจำลอง |
-| [features/room/preview-room.ts](../apps/web/src/features/room/preview-room.ts) | อ่าน ตั้ง และล้างสถานะเข้าห้องใน sessionStorage ของแท็บ |
+| [features/room/preview-room.ts](../apps/web/src/features/room/preview-room.ts) | ส่งต่อตั๋วแบบอ่านครั้งเดียวในหน่วยความจำ และเก็บสถานะเข้าห้องของแท็บ |
+| [features/room/game-connection.ts](../apps/web/src/features/room/game-connection.ts) | เปิดและปิด Colyseus ตรวจ snapshot รับ Voice grant และยกเลิก scope input เมื่อ connection หลุด |
+| [features/room/use-room-game.ts](../apps/web/src/features/room/use-room-game.ts) | จัดการตั๋วและสถานะ Game รวมถึง reload, retry และ Leave |
+| [features/room/voice-connection.ts](../apps/web/src/features/room/voice-connection.ts) | ต่อ LiveKit โดยเริ่มไมค์ปิด เปิดไมค์เมื่อผู้ใช้กด และปิด tracks เมื่อออก |
+| [features/room/use-room-voice.ts](../apps/web/src/features/room/use-room-voice.ts) | เริ่ม Voice เมื่อ Game พร้อม จัดสถานะไมค์ และยกเลิก Voice เมื่อ Game หลุด |
 | [features/preview/browser-storage.ts](../apps/web/src/features/preview/browser-storage.ts) | อ่านเขียน browser storage และแจ้งหน้าจอเมื่อค่าเปลี่ยน |
 | [features/preview/PreviewTheme.tsx](../apps/web/src/features/preview/PreviewTheme.tsx) | จัดธีม light, dark และ system และจดค่าที่เลือก |
 | [features/preview/PreviewControls.tsx](../apps/web/src/features/preview/PreviewControls.tsx) | แผงเลือกธีมและจำลองเหตุการณ์ของแต่ละหน้า |
@@ -52,7 +56,7 @@
 | [pnpm-lock.yaml](../pnpm-lock.yaml) | ล็อกเวอร์ชัน dependencies |
 | [.npmrc](../.npmrc) | ตั้ง pnpm แบบ hoisted สำหรับแชร์ dependency ใน workspace |
 | [.gitignore](../.gitignore) | ระบุไฟล์ env และผล build ที่เป็นของเครื่องพัฒนา |
-| [apps/web/package.json](../apps/web/package.json) | dependencies และคำสั่งรันเว็บ, typecheck, generate และตรวจ OpenAPI types |
+| [apps/web/package.json](../apps/web/package.json) | กำหนด dependencies ของเว็บ รวม Colyseus SDK, LiveKit client และ shared realtime schemas |
 | [apps/web/next.config.ts](../apps/web/next.config.ts) | ซ่อนปุ่ม dev ที่บังเมนูบัญชี และปิด persistent dev cache ที่ทำให้ HMR โหลดซ้ำ |
 | [apps/web/tsconfig.json](../apps/web/tsconfig.json) | ตั้ง TypeScript เคร่งครัดและ alias `@/` |
 | [apps/web/next-env.d.ts](../apps/web/next-env.d.ts) | ไฟล์ types ที่ Next.js สร้างให้ |
@@ -91,6 +95,6 @@
 | `mini-connecta:theme` | `localStorage` | ค่าธีม `system`, `light` หรือ `dark` แบบ JSON | [PreviewTheme.tsx](../apps/web/src/features/preview/PreviewTheme.tsx) |
 | `mini-connecta:joined-study-room` | `sessionStorage` | ข้อความ `'true'` หลัง Walk in สำเร็จในแท็บนั้น รีเฟรชแล้วยังอยู่ได้ ลบเมื่อ Leave หรือ Sign out | [preview-room.ts](../apps/web/src/features/room/preview-room.ts) |
 
-สถานะไมค์ การเชื่อมต่อ และตัวเลือกจำลองข้อผิดพลาดอยู่ใน state ของหน้า
+ตั๋ว Join, reconnection token และ Voice grant อยู่ในหน่วยความจำ พอ reload เว็บตรวจ session และ avatar แล้วขอตั๋วใหม่ การเดินและการเล่นเสียงตามระยะอยู่ในข้อ 4
 
 **Cookie สำหรับระบบจริง** วางไว้ในข้อ 4.2 ให้ Better Auth ใช้ session cookie แบบ `HttpOnly` และ `Secure` เมื่อใช้ HTTPS ฝั่ง NestJS จะตรวจ session ก่อนอนุญาตให้ใช้งาน API ที่ต้องล็อกอิน [แบบ API และ Auth](02-system-design/backend-api.md)

@@ -1,6 +1,6 @@
 # Mini Connecta — แผน Release 1
 
-สถานะ **ขั้น 3.4 เสร็จแล้ว พร้อมเริ่มขั้น 3.5** · อัปเดต 20 พฤศจิกายน 2026
+สถานะ **ขั้น 3.5 เสร็จแล้ว พร้อมเริ่มขั้น 3.6** · อัปเดต 21 พฤศจิกายน 2026
 
 เป้าหมายคือทำ Study Room 3D รุ่นเล็กให้คนสองคนเปิดเว็บจากคนละเครื่อง เข้าห้องเดียวกัน เห็นกันเดิน และคุยตามระยะได้ ใช้โปรเจกต์นี้ฝึกทำระบบครบตั้งแต่ UI ถึงการ deploy บน VM และเก็บหลักฐานว่าระบบทำงานอย่างไรเมื่อมีโหลดหรือบริการล่ม
 
@@ -66,10 +66,12 @@
 - [x] **3.2** วางหน้าใน `apps/web/src/app/` และโค้ดตาม feature ใต้ `apps/web/src/features/` ให้ route ทำหน้าที่ประกอบหน้าจอ ส่วน logic ของ auth, avatar, discover และ room อยู่ใน feature ของตัวเอง
 - [x] **3.3** ทำ OpenAPI snapshot จากแบบระบบเพื่อ generate types ด้วย `openapi-typescript` และใช้ `openapi-fetch` ใน `apps/web/src/lib/api.ts` ให้แต่ละ feature เรียกผ่าน client กลางและแปลง error เป็นสถานะของ UI เก็บ schema ของ realtime ที่ใช้ร่วมกันใน `packages/shared`
 - [x] **3.4** ทำ mock ให้ใช้ types จาก OpenAPI snapshot และคืน error ตาม contract เดียวกับ API จริง เช่น ไม่มี session, ไม่มี avatar และ join fail ให้สลับ mock ที่ชั้นเรียก API เพื่อให้ component ใช้ข้อมูลรูปแบบเดิม
-- [ ] **3.5** เตรียมจุดเปิดและปิด Colyseus/LiveKit ใน feature ห้อง แยก lifecycle ของทั้งคู่ เมื่อ Leave ให้ cleanup connection, audio tracks และ input เมื่อ reload ให้โหลด session และ avatar ตาม flow เดิม
+- [x] **3.5** เตรียมจุดเปิดและปิด Colyseus/LiveKit ใน feature ห้อง แยก lifecycle ของทั้งคู่ เมื่อ Leave ให้ cleanup connection, audio tracks และ input เมื่อ reload ให้โหลด session และ avatar ตาม flow เดิม
 - [ ] **3.6** ตรวจเส้นทางผู้ใช้ใหม่ ผู้ใช้เดิม และหน้า error ด้วย mock รัน typecheck และ lint ก่อนส่งต่อ
 
 **Workspace** ใช้ package web, api, game, shared และ db ให้รัน pnpm และ Git จากราก Mini-Connecta
+
+**ผลตรวจ 3.5** แยก Colyseus กับ LiveKit ฝั่งเว็บ เก็บตั๋วในหน่วยความจำ ตรวจบัญชีและขอตั๋วใหม่เมื่อ reload กด Leave แล้วปิด connection และยกเลิก scope ของ input Playwright ผ่านใน mock ที่ 1440, 390 และ 320 px รวม reload, reconnect และ Leave ทดสอบ Colyseus กับเซิร์ฟเวอร์ชั่วคราวในเครื่องแล้ว ส่วนฉากที่เดินได้และเสียงตามระยะอยู่ในข้อ 4.4–4.5
 
 **สรุปโค้ด** ตั้งแต่ข้อ 3.3 ให้อัปเดต [Architecture Summary](architecture-summary.th.md) ในงานเดียวกันเมื่อเพิ่ม ย้าย ลบไฟล์ หรือเปลี่ยนหน้าที่ของไฟล์
 

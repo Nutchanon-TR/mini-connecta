@@ -35,7 +35,8 @@ export function Discover() {
     setScenario('');
     void run(async signal => {
       queueMockScenario('join', scenario);
-      const result = await requestStudyRoomTicket({ attemptId: crypto.randomUUID() }, signal);
+      const attemptId = crypto.randomUUID();
+      const result = await requestStudyRoomTicket({ attemptId }, signal);
       if (signal.aborted) return;
       switch (result.kind) {
         case 'sign-in-required':
@@ -48,7 +49,7 @@ export function Discover() {
         case 'ticket-issued':
           if (isMockApi && scenario === 'room-full') {
             setError('Study Room is full. Wait for a spot to open, then try again.');
-          } else if (!enterPreviewRoom()) {
+          } else if (!enterPreviewRoom(result.ticket, attemptId)) {
             setError('Couldn’t open the Study Room on this device. Try joining again.');
           } else {
             router.replace('/rooms/study-room');
