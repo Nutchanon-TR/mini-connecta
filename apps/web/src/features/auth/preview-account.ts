@@ -7,9 +7,13 @@ import { readPreview, subscribePreview, writePreview } from '@/features/preview/
 import { leavePreviewRoom, readPreviewRoom } from '@/features/room/preview-room';
 import { loadCurrentAccount, type AccountState } from './api';
 
-type PreviewRoute = '/login' | '/character' | '/discover' | '/rooms/study-room';
+type PreviewRoute = '/login' | '/character' | '/character/edit' | '/discover' | '/rooms/study-room';
 
-function getDestination(route: PreviewRoute, account: AccountState | null, joined: boolean): PreviewRoute | null {
+function getDestination(
+  route: PreviewRoute,
+  account: AccountState | null,
+  joined: boolean,
+): PreviewRoute | null {
   if (account?.kind === 'sign-in-required') return route === '/login' ? null : '/login';
   if (account?.kind === 'character-required') return route === '/character' ? null : '/character';
   if (account?.kind !== 'ready') return null;
@@ -18,9 +22,14 @@ function getDestination(route: PreviewRoute, account: AccountState | null, joine
   return null;
 }
 
-const readPreviewIdentity = () => isMockApi
-  ? JSON.stringify([readPreview('signed-in'), readPreview('profile')])
-  : '';
+const readPreviewIdentity = () =>
+  isMockApi
+    ? JSON.stringify([
+        readPreview('signed-in'),
+        readPreview('profile'),
+        readPreview('guest-profile'),
+      ])
+    : '';
 const beforeHydration = () => null;
 
 export function useAccountAccess(route: PreviewRoute) {
@@ -28,21 +37,32 @@ export function useAccountAccess(route: PreviewRoute) {
   const identity = useSyncExternalStore(subscribePreview, readPreviewIdentity, beforeHydration);
   const joined = useSyncExternalStore(subscribePreview, readPreviewRoom, beforeHydration);
   const [revision, setRevision] = useState(0);
-  const retry = useCallback(() => setRevision(value => value + 1), []);
-  const [result, setResult] = useState<{ state: AccountState; identity: string; revision: number } | null>(null);
-  const account = result?.identity === identity && result.revision === revision ? result.state : null;
+  const retry = useCallback(() => setRevision((value) => value + 1), []);
+  const [result, setResult] = useState<{
+    state: AccountState;
+    identity: string;
+    revision: number;
+  } | null>(null);
+  const account =
+    result?.identity === identity && result.revision === revision ? result.state : null;
   const destination = getDestination(route, account, joined === true);
 
   useEffect(() => {
     if (identity === null) return;
     const controller = new AbortController();
-    void loadCurrentAccount(controller.signal).then(state => {
-      if (!controller.signal.aborted) setResult({ state, identity, revision });
-    }).catch(() => {
-      if (!controller.signal.aborted) {
-        setResult({ state: { kind: 'unavailable', message: 'Couldn’t load your account. Try again.' }, identity, revision });
-      }
-    });
+    void loadCurrentAccount(controller.signal)
+      .then((state) => {
+        if (!controller.signal.aborted) setResult({ state, identity, revision });
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setResult({
+            state: { kind: 'unavailable', message: 'Couldn’t load your account. Try again.' },
+            identity,
+            revision,
+          });
+        }
+      });
     return () => controller.abort();
   }, [identity, revision]);
 
@@ -53,17 +73,20 @@ export function useAccountAccess(route: PreviewRoute) {
   return {
     ready: account !== null && account.kind !== 'unavailable' && !destination,
     avatar: account?.kind === 'ready' ? account.avatar : null,
+    isGuest: account?.kind === 'ready' && account.user.isGuest === true,
     error: account?.kind === 'unavailable' ? account.message : '',
     retry,
   };
 }
 
-export function signInPreview() {
-  return isMockApi && writePreview('signed-in', 'true');
+export function signInPreview(guest = false) {
+  if (!isMockApi || (guest && !writePreview('guest-profile', null))) return false;
+  return writePreview('signed-in', guest ? 'guest' : 'true');
 }
 
 export function signOutPreview() {
   if (!isMockApi) return false;
   leavePreviewRoom();
+  if (readPreview('signed-in') === 'guest') writePreview('guest-profile', null);
   return writePreview('signed-in', null);
 }

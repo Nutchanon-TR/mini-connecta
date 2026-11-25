@@ -20,7 +20,7 @@ erDiagram
 
 | ข้อมูล | เจ้าของ schema | กฎ |
 | --- | --- | --- |
-| User, account, session และตาราง auth ที่ adapter ต้องใช้ | Better Auth + Prisma adapter | ใช้ schema ที่ CLI สร้างจาก config จริง ล็อกใน migration และคง unique/index ของ auth schema |
+| User, account, session และตาราง auth ที่ adapter ต้องใช้ | Better Auth + Prisma adapter | ใช้โมเดล Better Auth ใน Prisma schema ล็อก unique/index ใน migration ID ของ Auth สร้างผ่าน UUID generator ใน config |
 | `avatars` | Mini Connecta ผ่าน Prisma | `user_id` เป็น PK/FK ไป user ด้วย type เดียวกับ auth schema และ `ON DELETE CASCADE` |
 | `avatars.display_name` | Mini Connecta | `NOT NULL`, ตรวจความยาว 1–16 หลัง trim ใน API และใช้ DB check สำหรับความยาวที่เก็บ |
 | `avatars.preset` | Mini Connecta | `NOT NULL`, check ให้เป็น `strawberry` หรือ `matcha` |

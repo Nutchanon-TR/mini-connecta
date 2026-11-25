@@ -1,0 +1,154 @@
+name: mini-connecta
+
+x-api-env: &api-env
+  APP_ORIGIN: ${APP_ORIGIN:-http://localhost:8080}
+  BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:8080}
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env}
+  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+  GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+  DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
+  ROOM_JOIN_SECRET: ${ROOM_JOIN_SECRET:?Set ROOM_JOIN_SECRET in .env}
+  GAME_INTERNAL_URL: ${GAME_INTERNAL_URL:-http://game:2569}
+  GAME_WS_URL: ${GAME_WS_URL:-ws://localhost:2567}
+
+x-logs: &logs
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '3'
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mini}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-mini}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 3s
+      timeout: 3s
+      retries: 15
+    restart: unless-stopped
+    networks: [data]
+    logging: *logs
+
+  migrate:
+    image: mini-connecta-api:${RELEASE_TAG:-local}
+    build: { context: ., target: api }
+    environment:
+      DATABASE_URL: ${MIGRATION_DATABASE_URL:-${DATABASE_URL}}
+    command: [pnpm, --filter, '@mini-connecta/db', migrate]
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [data]
+    logging: *logs
+
+  api:
+    image: mini-connecta-api:${RELEASE_TAG:-local}
+    build: { context: ., target: api }
+    environment: *api-env
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      test: [CMD, node, -e, 'fetch("http://127.0.0.1:2568/health/ready").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))']
+      interval: 5s
+      timeout: 4s
+      retries: 12
+    restart: unless-stopped
+    networks: [edge, data]
+    logging: *logs
+
+  game:
+    image: mini-connecta-game:${RELEASE_TAG:-local}
+    build: { context: ., target: game }
+    environment:
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:8080}
+      ROOM_JOIN_SECRET: ${ROOM_JOIN_SECRET:?Set ROOM_JOIN_SECRET in .env}
+      ROOM_CAPACITY: ${ROOM_CAPACITY:-20}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:?Set LIVEKIT_API_KEY in .env}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:?Set LIVEKIT_API_SECRET in .env}
+      LIVEKIT_INTERNAL_URL: ${LIVEKIT_INTERNAL_URL:-http://livekit:7880}
+      LIVEKIT_PUBLIC_URL: ${LIVEKIT_PUBLIC_URL:-ws://localhost:7880}
+    healthcheck:
+      test: [CMD, node, -e, 'fetch("http://127.0.0.1:2569/health/ready").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))']
+      interval: 5s
+      timeout: 4s
+      retries: 12
+    restart: unless-stopped
+    networks: [edge]
+    logging: *logs
+
+  livekit:
+    image: livekit/livekit-server:v1.13.11
+    environment:
+      LIVEKIT_CONFIG: |
+        port: 7880
+        prometheus_port: 6789
+        rtc:
+          tcp_port: 7881
+          udp_port: 7882
+          node_ip: ${LIVEKIT_NODE_IP:-127.0.0.1}
+          use_external_ip: false
+        keys:
+          "${LIVEKIT_API_KEY:?Set LIVEKIT_API_KEY in .env}": "${LIVEKIT_API_SECRET:?Set LIVEKIT_API_SECRET in .env}"
+        logging:
+          json: true
+          level: warn
+    ports:
+      - '${MEDIA_BIND:-127.0.0.1}:7881:7881/tcp'
+      - '${MEDIA_BIND:-127.0.0.1}:7882:7882/udp'
+    healthcheck:
+      test: [CMD-SHELL, 'wget -q -O /dev/null http://127.0.0.1:7880/']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+    networks: [edge]
+    logging: *logs
+
+  web:
+    image: mini-connecta-web:${RELEASE_TAG:-local}
+    build: { context: ., target: web }
+    healthcheck:
+      test: [CMD, node, -e, 'fetch("http://127.0.0.1:3000/login").then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))']
+      interval: 5s
+      timeout: 4s
+      retries: 12
+    restart: unless-stopped
+    networks: [edge]
+    logging: *logs
+
+  caddy:
+    image: caddy:2-alpine
+    environment:
+      WEB_SITE: ${WEB_SITE:-:8080}
+      GAME_SITE: ${GAME_SITE:-:2567}
+      RTC_SITE: ${RTC_SITE:-:7880}
+    ports:
+      - '127.0.0.1:8080:8080'
+      - '127.0.0.1:2567:2567'
+      - '127.0.0.1:7880:7880'
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web: { condition: service_healthy }
+      game: { condition: service_healthy }
+      api: { condition: service_healthy }
+    restart: unless-stopped
+    networks: [edge]
+    logging: *logs
+
+networks:
+  edge:
+  data:
+    internal: true
+
+volumes:
+  postgres:
+  caddy_data:
+  caddy_config:

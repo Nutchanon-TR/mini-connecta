@@ -1,0 +1,10 @@
+services:
+  caddy:
+    ports: !override
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+  livekit:
+    ports: !override
+      - '7881:7881/tcp'
+      - '7882:7882/udp'

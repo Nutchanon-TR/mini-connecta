@@ -6,9 +6,12 @@ export function usePreviewAction() {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pending, setPending] = useState(false);
 
-  useEffect(() => () => {
-    if (timer.current !== null) clearTimeout(timer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (timer.current !== null) clearTimeout(timer.current);
+    },
+    [],
+  );
 
   function start(delay: number, complete: () => void) {
     if (timer.current !== null) return;

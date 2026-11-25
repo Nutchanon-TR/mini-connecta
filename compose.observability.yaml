@@ -1,0 +1,49 @@
+services:
+  prometheus:
+    image: prom/prometheus:v3.16.0
+    profiles: [observability]
+    command: [--config.file=/etc/prometheus/prometheus.yml, --storage.tsdb.path=/prometheus, --storage.tsdb.retention.time=35d, --storage.tsdb.retention.size=2GB]
+    volumes:
+      - ./infra/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infra/observability/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus:/prometheus
+    ports: ['127.0.0.1:9090:9090']
+    networks: [edge]
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:v0.30.0
+    profiles: [observability]
+    volumes:
+      - ./infra/observability/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager:/alertmanager
+    ports: ['127.0.0.1:9093:9093']
+    networks: [edge]
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:13.3.1
+    profiles: [observability]
+    ports: ['127.0.0.1:3001:3000']
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-local-grafana-change-me}
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+    volumes:
+      - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana:/var/lib/grafana
+    networks: [edge]
+    restart: unless-stopped
+
+  node:
+    image: prom/node-exporter:v1.10.2
+    profiles: [observability]
+    command: [--path.rootfs=/host]
+    volumes: ['/:/host:ro']
+    networks: [edge]
+    restart: unless-stopped
+
+volumes:
+  prometheus:
+  alertmanager:
+  grafana:

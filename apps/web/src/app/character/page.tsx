@@ -5,5 +5,9 @@ import { CharacterForm } from '@/features/avatar/CharacterForm';
 export const metadata: Metadata = { title: 'Create character' };
 
 export default function CharacterPage() {
-  return <AuthLayout><CharacterForm /></AuthLayout>;
+  return (
+    <AuthLayout>
+      <CharacterForm />
+    </AuthLayout>
+  );
 }

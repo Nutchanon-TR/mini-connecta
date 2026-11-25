@@ -43,7 +43,9 @@ export function PreviewTheme({
 
   return (
     <ThemeContext.Provider value={theme}>
-      <div className="preview-page" data-theme={color}>{children}</div>
+      <div className="preview-page" data-theme={color}>
+        {children}
+      </div>
     </ThemeContext.Provider>
   );
 }

@@ -371,6 +371,10 @@
               "id": {
                 "type": "string",
                 "minLength": 1
+              },
+              "isGuest": {
+                "type": "boolean",
+                "description": "Present for guest sessions."
               }
             }
           },
@@ -497,7 +501,8 @@
             "type": "string",
             "enum": [
               "join",
-              "voice"
+              "voice",
+              "voice_connect"
             ]
           },
           "attemptId": {
@@ -572,7 +577,8 @@
           "kind": {
             "type": "string",
             "enum": [
-              "voice"
+              "voice",
+              "voice_connect"
             ]
           },
           "attemptId": {

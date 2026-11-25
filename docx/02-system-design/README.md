@@ -23,7 +23,7 @@ Mini Connecta ใช้ **NestJS + Prisma + OpenAPI** ตามสแตกแ�
 | Voice | LiveKit self-hosted, JS SDK และ Server SDK | WebRTC audio สำหรับห้องเดียว Game ออก token ตามสิทธิ์ |
 | Data | PostgreSQL 17, Prisma 7 และ Prisma Migrate | User, Google account, session และ avatar |
 | Runtime | Node.js LTS, TypeScript, pnpm, Caddy, Docker Compose | Local และ Linux VM on-premises ของคณะ |
-| Monitoring | Prometheus, Grafana, Alertmanager, Alloy, Loki และ `@nestjs/terminus` สำหรับ readiness | Metrics, logs และ alerts |
+| Monitoring | Prometheus, Grafana, Alertmanager และ `@nestjs/terminus` สำหรับ readiness | Metrics และ alerts ดู log ผ่าน Docker |
 | Verification | Vitest, Playwright, k6, Colyseus bots, LiveKit CLI และ GitHub Actions | Tests, local load test และ Docker image bundle ตาม commit |
 
 ดูฐานระบบที่นำมาประกอบการออกแบบได้จาก [สถาปัตยกรรม V1](../../../Project-StudyRoom3d/README.md) และ [Compose ของ V1](../../../Project-StudyRoom3d/infra/compose/README.md)
@@ -40,7 +40,7 @@ flowchart LR
     Game["Colyseus game"]
     Voice["LiveKit"]
     DB[("PostgreSQL")]
-    Obs["Prometheus, Alloy และ Grafana"]
+    Obs["Prometheus, Grafana และ Alertmanager"]
     Browser <-->|"Sign in redirect"| Google
     API <-->|"OAuth token exchange"| Google
     Browser <-->|"HTTPS และ WSS"| Edge
@@ -52,9 +52,9 @@ flowchart LR
     API -->|"Prisma: accounts, sessions และ avatars"| DB
     API -->|"Internal room lookup"| Game
     Game -->|"Room Service"| Voice
-    API -->|"Metrics และ logs"| Obs
-    Game -->|"Metrics และ logs"| Obs
-    Voice -->|"Metrics และ logs"| Obs
+    API -->|"Metrics"| Obs
+    Game -->|"Metrics"| Obs
+    Voice -->|"Metrics"| Obs
 ~~~
 
 ใช้หลัก **Model the Domain** ให้ Colyseus ถือ state ของผู้เล่นและความจุเพียงจุดเดียว ส่วน PostgreSQL ถือข้อมูลที่ต้องอยู่หลัง restart ใช้ **Boundary Discipline** ให้ API และ Game ตรวจข้อมูลที่รับเข้า และใช้ **Make Operations Idempotent** ให้เซฟ avatar ซ้ำหรือ cleanup ซ้ำได้

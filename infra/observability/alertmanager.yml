@@ -1,0 +1,7 @@
+route:
+  receiver: local
+  group_wait: 5s
+  group_interval: 30s
+  repeat_interval: 4h
+receivers:
+  - name: local

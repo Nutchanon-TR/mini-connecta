@@ -1,0 +1,660 @@
+{
+  "uid": "mini-connecta-overview",
+  "title": "Study Room Overview",
+  "description": "Player outcomes for joining the room, using voice, and recovering a game connection. Join and Voice use five-minute windows. Reconnect shows totals since the Game Server started. Golden Signals show Join ticket API traffic, latency and errors alongside API event-loop lag.",
+  "tags": [
+    "mini-connecta"
+  ],
+  "schemaVersion": 39,
+  "refresh": "10s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "links": [
+    {
+      "title": "Open diagnostics",
+      "type": "link",
+      "url": "/d/mini-connecta/study-room-diagnostics",
+      "includeVars": false,
+      "keepTime": true,
+      "targetBlank": false
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Join",
+      "description": "Walk in until movement is ready. The percentage uses eligible attempts. Full rooms and cancelled attempts are tracked separately.",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 11
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Ready within 5 s (%)",
+          "expr": "clamp_max(sum(increase(mini_room_attempt_duration_seconds_bucket{kind=\"join\",outcome=\"success\",le=\"5.0\"}[5m])) / (sum(increase(mini_room_attempts_total{kind=\"join\",outcome!~\"cancelled|room_full|already_in_room|auth_required|avatar_required\"}[5m])) > 0), 1)"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Eligible attempts",
+          "expr": "sum(increase(mini_room_attempts_total{kind=\"join\",outcome!~\"cancelled|room_full|already_in_room|auth_required|avatar_required\"}[5m]))"
+        },
+        {
+          "refId": "C",
+          "legendFormat": "Room full",
+          "expr": "sum(increase(mini_room_attempts_total{kind=\"join\",outcome=\"room_full\"}[5m]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "decimals": 1,
+          "custom": {
+            "axisPlacement": "left",
+            "axisLabel": "Ready within 5 s (%)",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "auto",
+            "spanNulls": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Ready within 5 s (%)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              },
+              {
+                "id": "max",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Eligible attempts"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Attempts / 5 min"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    5,
+                    3
+                  ]
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Room full"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Attempts / 5 min"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    5,
+                    3
+                  ]
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "last"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Voice",
+      "description": "LiveKit connection includes listening with the mic off. Mic publish measures sending a track after microphone permission. Cancelled attempts are excluded.",
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 8,
+        "h": 11
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "LiveKit connected (%)",
+          "expr": "clamp_max(sum(increase(mini_room_attempts_total{kind=\"voice_connect\",outcome=\"success\"}[5m])) / (sum(increase(mini_room_attempts_total{kind=\"voice_connect\",outcome!~\"cancelled\"}[5m])) > 0), 1)"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Mic published (%)",
+          "expr": "clamp_max(sum(increase(mini_room_attempts_total{kind=\"voice\",outcome=\"success\"}[5m])) / (sum(increase(mini_room_attempts_total{kind=\"voice\",outcome!~\"cancelled\"}[5m])) > 0), 1)"
+        },
+        {
+          "refId": "C",
+          "legendFormat": "Connection attempts",
+          "expr": "sum(increase(mini_room_attempts_total{kind=\"voice_connect\",outcome!~\"cancelled\"}[5m]))"
+        },
+        {
+          "refId": "D",
+          "legendFormat": "Mic attempts",
+          "expr": "sum(increase(mini_room_attempts_total{kind=\"voice\",outcome!~\"cancelled\"}[5m]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "decimals": 1,
+          "custom": {
+            "axisPlacement": "left",
+            "axisLabel": "Success (%)",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "auto",
+            "spanNulls": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "LiveKit connected (%)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              },
+              {
+                "id": "max",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mic published (%)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "purple"
+                }
+              },
+              {
+                "id": "max",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Connection attempts"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Attempts / 5 min"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    5,
+                    3
+                  ]
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mic attempts"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Attempts / 5 min"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    5,
+                    3
+                  ]
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "last"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Reconnect",
+      "description": "Totals since the Game Server started. Game Server counts unexpected drops, successful WebSocket reconnects and expired reconnect windows. Intentional exits are excluded.",
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 8,
+        "h": 11
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Game dropped",
+          "expr": "(sum(mini_game_reconnect_total{outcome=\"started\"}) or vector(0)) and (max(up{job=\"game\"}) == 1)"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "Reconnected",
+          "expr": "(sum(mini_game_reconnect_total{outcome=\"success\"}) or vector(0)) and (max(up{job=\"game\"}) == 1)"
+        },
+        {
+          "refId": "C",
+          "legendFormat": "Expired",
+          "expr": "(sum(mini_game_reconnect_total{outcome=\"expired\"}) or vector(0)) and (max(up{job=\"game\"}) == 1)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "decimals": 0,
+          "custom": {
+            "axisPlacement": "left",
+            "axisLabel": "Events since game start",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "auto",
+            "spanNulls": false,
+            "axisSoftMax": 1
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Game dropped"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Reconnected"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Expired"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "last"
+          ],
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      }
+    },
+    {
+      "id": 4,
+      "type": "row",
+      "title": "Golden Signals",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Traffic",
+      "description": "Join ticket requests per second, averaged over five minutes.",
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Join ticket requests",
+          "expr": "sum(rate(mini_http_requests_total{job=\"api\",route=\"/api/rooms/study-room/join\",method=\"POST\"}[5m]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": false
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Latency",
+      "description": "95th percentile response time for the Join ticket API over five minutes.",
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "Join ticket p95",
+          "expr": "1000 * histogram_quantile(0.95, sum by (le) (rate(mini_http_request_duration_seconds_bucket{job=\"api\",route=\"/api/rooms/study-room/join\",method=\"POST\"}[5m]))) and (sum(rate(mini_http_requests_total{job=\"api\",route=\"/api/rooms/study-room/join\",method=\"POST\"}[5m])) > 0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": false
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Errors",
+      "description": "Share of Join ticket API responses returning HTTP 5xx over five minutes. Gaps indicate no requests.",
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "HTTP 5xx share",
+          "expr": "(sum(rate(mini_http_requests_total{job=\"api\",route=\"/api/rooms/study-room/join\",method=\"POST\",status=~\"5..\"}[5m])) or 0 * sum(rate(mini_http_requests_total{job=\"api\",route=\"/api/rooms/study-room/join\",method=\"POST\"}[5m]))) / (sum(rate(mini_http_requests_total{job=\"api\",route=\"/api/rooms/study-room/join\",method=\"POST\"}[5m])) > 0)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": false
+        }
+      }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Saturation",
+      "description": "Five-minute mean of Node.js event-loop lag in the API process.",
+      "gridPos": {
+        "x": 12,
+        "y": 19,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "API event-loop lag",
+          "expr": "1000 * max(avg_over_time(mini_api_nodejs_eventloop_lag_seconds{job=\"api\"}[5m]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "showLegend": false
+        }
+      }
+    }
+  ]
+}

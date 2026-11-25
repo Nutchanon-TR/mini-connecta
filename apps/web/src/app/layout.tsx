@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
+import './shell.css';
 
 export const metadata: Metadata = {
   title: { default: 'Mini Connecta', template: '%s · Mini Connecta' },

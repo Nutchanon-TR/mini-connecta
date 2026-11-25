@@ -65,7 +65,7 @@
 ## Health และ cache
 
 - ใช้ `@nestjs/terminus` แยก liveness ของ API ออกจาก readiness ที่เช็ก PostgreSQL และความพร้อมของ schema Game readiness เช็กว่าห้อง singleton เปิดให้ join แล้ว โดยอาการเสียงล่มแสดงบน monitoring แยก
-- Web และ API อยู่หลัง Caddy ส่วน readiness, DB, Prometheus, Alertmanager และ Loki เปิดภายในเท่านั้น ตั้ง log rotation กับ retention ตามขนาด disk
+- Web และ API อยู่หลัง Caddy ส่วน readiness, DB, Prometheus และ Alertmanager เปิดภายในเท่านั้น ตั้ง log rotation กับ retention ตามขนาด disk
 - Static assets ที่ชื่อมี content hash ใช้ long-lived browser cache ได้ หน้า HTML และไฟล์ที่ชื่อไม่เปลี่ยนตามเนื้อหาใช้ revalidation ส่วน auth, avatar และ join ใช้ `no-store`
 - ใช้ Redis หรือแยกบริการออกจาก VM เดียวเมื่อผลเทสชี้ปัญหา resource หรือมีงานขยายหลาย instance เมื่อ Game หรือ VM restart ผู้เล่นต้องเข้าห้องใหม่ เมื่อ LiveKit restart ให้ผู้เล่นเดินต่อได้และเริ่มการเชื่อมเสียงใหม่โดยไมค์ปิด
 

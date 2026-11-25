@@ -54,16 +54,19 @@ function statusCode(status: number): FailureCode {
 
 function toFailure(status: number, body: unknown): ApiFailure {
   const error = isRecord(body) && isRecord(body.error) ? body.error : undefined;
-  const code = status === 401
-    ? 'unauthorized'
-    : isContractError(error?.code)
-      ? error.code
-      : statusCode(status);
+  const code =
+    status === 401
+      ? 'unauthorized'
+      : isContractError(error?.code)
+        ? error.code
+        : statusCode(status);
   const fields = error?.fields;
   if (code !== 'validation_error' || !isRecord(fields)) return { code, message: messages[code] };
 
   const fieldErrors = Object.fromEntries(
-    Object.entries(fields).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+    Object.entries(fields).filter(
+      (entry): entry is [string, string] => typeof entry[1] === 'string',
+    ),
   );
   return { code, message: messages[code], fields: fieldErrors };
 }

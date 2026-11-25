@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { startRoomAttempt } from './attempt';
 import type { ActiveGame } from './game-connection';
 import { connectVoice, type RoomVoice } from './voice-connection';
 
@@ -19,14 +20,26 @@ export function useRoomVoice(game: ActiveGame | null) {
   const mic = result?.game === game ? result.mic : 'connecting';
   const [pendingGame, setPendingGame] = useState<ActiveGame | null>(null);
   const pending = game !== null && pendingGame === game;
+  const [blockedGame, setBlockedGame] = useState<ActiveGame | null>(null);
 
   useEffect(() => {
     if (!game) return;
-    const attempt = startVoice(game, () => setResult({ game, mic: 'unavailable' }));
+    const attempt = startVoice(
+      game,
+      () => {
+        setResult({ game, mic: 'unavailable' });
+        setBlockedGame(null);
+      },
+      (blocked) => setBlockedGame(blocked ? game : null),
+    );
     active.current = attempt;
     void attempt.voice.then(
-      () => { if (!attempt.signal.aborted) setResult({ game, mic: 'off' }); },
-      () => { if (!attempt.signal.aborted) setResult({ game, mic: 'unavailable' }); },
+      () => {
+        if (!attempt.signal.aborted) setResult({ game, mic: 'off' });
+      },
+      () => {
+        if (!attempt.signal.aborted) setResult({ game, mic: 'unavailable' });
+      },
     );
     return () => active.current?.controller.abort();
   }, [game]);
@@ -42,9 +55,13 @@ export function useRoomVoice(game: ActiveGame | null) {
     }
     if (mic === 'unavailable') {
       attempt.controller.abort();
-      attempt = startVoice(game, () => {
-        if (active.current === attempt) setResult({ game, mic: 'unavailable' });
-      });
+      attempt = startVoice(
+        game,
+        () => {
+          if (active.current === attempt) setResult({ game, mic: 'unavailable' });
+        },
+        (blocked) => setBlockedGame(blocked ? game : null),
+      );
       active.current = attempt;
     }
 
@@ -57,7 +74,9 @@ export function useRoomVoice(game: ActiveGame | null) {
       if (!attempt.signal.aborted) setResult({ game, mic: enabled ? 'on' : 'off' });
     } catch (error) {
       if (!attempt.signal.aborted) {
-        const blocked = error instanceof Error && (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError');
+        const blocked =
+          error instanceof Error &&
+          (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError');
         setResult({ game, mic: blocked ? 'blocked' : 'unavailable' });
       }
     } finally {
@@ -66,11 +85,44 @@ export function useRoomVoice(game: ActiveGame | null) {
     }
   }
 
-  return { mic, pending, toggleMic };
+  async function enableAudio() {
+    try {
+      await (await active.current?.voice)?.enableAudio();
+    } catch {
+      /* Retry on the next user gesture. */
+    }
+  }
+
+  return {
+    mic,
+    pending,
+    toggleMic,
+    audioBlocked: game !== null && blockedGame === game,
+    enableAudio,
+  };
 }
 
-function startVoice(game: ActiveGame, onDisconnect: () => void): VoiceAttempt {
+function startVoice(
+  game: ActiveGame,
+  onDisconnect: () => void,
+  onAudioBlocked: (blocked: boolean) => void,
+): VoiceAttempt {
   const controller = new AbortController();
   const signal = AbortSignal.any([game.inputSignal, controller.signal]);
-  return { controller, signal, voice: connectVoice(game, signal, onDisconnect), toggling: false };
+  const connection = startRoomAttempt('voice_connect');
+  const cancel = () => connection.finish('cancelled');
+  signal.addEventListener('abort', cancel, { once: true });
+  const voice = connectVoice(game, signal, onDisconnect, onAudioBlocked).then(
+    (connected) => {
+      signal.removeEventListener('abort', cancel);
+      connection.finish(signal.aborted ? 'cancelled' : 'success');
+      return connected;
+    },
+    (error) => {
+      signal.removeEventListener('abort', cancel);
+      connection.finish(signal.aborted ? 'cancelled' : 'failed');
+      throw error;
+    },
+  );
+  return { controller, signal, voice, toggling: false };
 }

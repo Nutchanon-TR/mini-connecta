@@ -1,0 +1,23 @@
+{$WEB_SITE} {
+  encode gzip
+  @private path /metrics /health/* /internal/*
+  respond @private 404
+  handle /api/* {
+    reverse_proxy api:2568
+  }
+  handle {
+    reverse_proxy web:3000
+  }
+}
+
+{$GAME_SITE} {
+  @private path /metrics /health/* /internal/*
+  respond @private 404
+  reverse_proxy game:2567
+}
+
+{$RTC_SITE} {
+  @private path /metrics /health/* /internal/*
+  respond @private 404
+  reverse_proxy livekit:7880
+}

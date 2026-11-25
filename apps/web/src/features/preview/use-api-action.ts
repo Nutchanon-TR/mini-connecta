@@ -6,10 +6,13 @@ export function useApiAction() {
   const current = useRef<AbortController | null>(null);
   const [pending, setPending] = useState(false);
 
-  useEffect(() => () => {
-    current.current?.abort();
-    current.current = null;
-  }, []);
+  useEffect(
+    () => () => {
+      current.current?.abort();
+      current.current = null;
+    },
+    [],
+  );
 
   async function run(action: (signal: AbortSignal) => Promise<void>) {
     if (current.current) return;

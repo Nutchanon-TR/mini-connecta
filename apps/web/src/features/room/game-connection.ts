@@ -3,14 +3,20 @@ import {
   roomJoinErrorSchema,
   roomSnapshotSchema,
   serverMessageSchemas,
+  type MoveMessage,
+  type RoomSnapshot,
 } from '@mini-connecta/shared/realtime';
 import type { StudyRoomTicket } from '@/features/discover/api';
 import { isMockApi } from '@/lib/api-mode';
 
-export type VoiceGrant = ReturnType<typeof serverMessageSchemas['voice.granted']['parse']>;
+export type VoiceGrant = ReturnType<(typeof serverMessageSchemas)['voice.granted']['parse']>;
 
 export type ActiveGame = {
   inputSignal: AbortSignal;
+  sessionId: string;
+  readSnapshot: () => RoomSnapshot;
+  subscribe: (listener: () => void) => () => void;
+  sendMove: (move: MoveMessage) => void;
   requestVoice: (signal: AbortSignal) => Promise<VoiceGrant | null>;
 };
 
@@ -38,19 +44,36 @@ export function joinErrorMessage(error: unknown) {
 }
 
 function stateValue(state: unknown): unknown {
-  if (state && typeof state === 'object' && 'toJSON' in state && typeof state.toJSON === 'function') {
+  if (
+    state &&
+    typeof state === 'object' &&
+    'toJSON' in state &&
+    typeof state.toJSON === 'function'
+  ) {
     return state.toJSON();
   }
   return state;
 }
 
-export async function connectGame(ticket: StudyRoomTicket, signal: AbortSignal, events: GameEvents) {
+export async function connectGame(
+  ticket: StudyRoomTicket,
+  signal: AbortSignal,
+  events: GameEvents,
+) {
   const options = joinOptionsSchema.parse({ joinTicket: ticket.joinTicket });
   signal.throwIfAborted();
 
   if (isMockApi) {
     // The preview exercises the same ownership and input cleanup without a socket.
-    events.ready({ inputSignal: signal, requestVoice: async () => null });
+    const snapshot: RoomSnapshot = { players: {} };
+    events.ready({
+      inputSignal: signal,
+      sessionId: 'preview',
+      requestVoice: async () => null,
+      readSnapshot: () => snapshot,
+      subscribe: () => () => undefined,
+      sendMove: () => undefined,
+    });
     return;
   }
 
@@ -59,21 +82,26 @@ export async function connectGame(ticket: StudyRoomTicket, signal: AbortSignal, 
   const timeout = AbortSignal.timeout(15_000);
   const matchmaking = AbortSignal.any([signal, timeout]);
   const client = new Client(ticket.gameWsUrl, {
-    fetchFn: (url, init) => fetch(url, { ...init, signal: matchmaking }),
+    fetchFn: (url, init) => fetch(url, { ...init, credentials: 'omit', signal: matchmaking }),
   });
 
   const joining = client.joinById<unknown>(ticket.gameRoomId, options);
   // The SDK cannot cancel the seat WebSocket mid-handshake. Release any room that arrives late.
-  void joining.then(room => {
-    if (matchmaking.aborted) void room.leave().catch(() => undefined);
-  }, () => undefined);
+  void joining.then(
+    (room) => {
+      if (matchmaking.aborted) void room.leave().catch(() => undefined);
+    },
+    () => undefined,
+  );
 
   const room = await new Promise<Awaited<typeof joining>>((resolve, reject) => {
     function abort() {
       reject(matchmaking.reason);
     }
     matchmaking.addEventListener('abort', abort, { once: true });
-    void joining.then(resolve, reject).finally(() => matchmaking.removeEventListener('abort', abort));
+    void joining
+      .then(resolve, reject)
+      .finally(() => matchmaking.removeEventListener('abort', abort));
   });
   if (matchmaking.aborted) {
     void room.leave().catch(() => undefined);
@@ -84,6 +112,8 @@ export async function connectGame(ticket: StudyRoomTicket, signal: AbortSignal, 
   let stateTimeout: ReturnType<typeof setTimeout> | undefined;
   let reconnectTimeout: ReturnType<typeof setTimeout> | undefined;
   let waitingForState = true;
+  let latest: RoomSnapshot = { players: {} };
+  const listeners = new Set<() => void>();
 
   function requestVoice(voiceSignal: AbortSignal) {
     const activeSignal = AbortSignal.any([voiceSignal, AbortSignal.timeout(5_000)]);
@@ -98,7 +128,7 @@ export async function connectGame(ticket: StudyRoomTicket, signal: AbortSignal, 
       function abort() {
         finish(null);
       }
-      const unsubscribeGranted = room.onMessage<unknown>('voice.granted', payload => {
+      const unsubscribeGranted = room.onMessage<unknown>('voice.granted', (payload) => {
         const grant = serverMessageSchemas['voice.granted'].safeParse(payload);
         finish(grant.success ? grant.data : null);
       });
@@ -114,19 +144,41 @@ export async function connectGame(ticket: StudyRoomTicket, signal: AbortSignal, 
   }
 
   function onState(state: unknown) {
-    if (!waitingForState || !room.connection?.isOpen) return;
+    if (!room.connection?.isOpen || (!waitingForState && !input)) return;
     const snapshot = roomSnapshotSchema.safeParse(stateValue(state));
     if (!snapshot.success || !Object.hasOwn(snapshot.data.players, room.sessionId)) return;
 
+    latest = snapshot.data;
+    if (input) {
+      listeners.forEach((listener) => listener());
+      return;
+    }
     waitingForState = false;
     clearTimeout(stateTimeout);
     input = new AbortController();
-    events.ready({ inputSignal: input.signal, requestVoice });
+    const inputSignal = input.signal;
+    events.ready({
+      inputSignal,
+      requestVoice,
+      sessionId: room.sessionId,
+      readSnapshot: () => latest,
+      subscribe(listener) {
+        if (inputSignal.aborted) return () => undefined;
+        listeners.add(listener);
+        return () => {
+          listeners.delete(listener);
+        };
+      },
+      sendMove(move) {
+        if (!inputSignal.aborted && room.connection.isOpen) room.send('move', move);
+      },
+    });
   }
 
   function resetInput() {
     input?.abort();
     input = null;
+    listeners.clear();
     clearTimeout(stateTimeout);
     clearTimeout(reconnectTimeout);
   }
@@ -135,6 +187,7 @@ export async function connectGame(ticket: StudyRoomTicket, signal: AbortSignal, 
     waitingForState = false;
     resetInput();
     signal.removeEventListener('abort', close);
+    window.removeEventListener('pagehide', close);
     room.onStateChange.remove(onState);
     room.onDrop.remove(onDrop);
     room.onReconnect.remove(onReconnect);
@@ -175,6 +228,7 @@ export async function connectGame(ticket: StudyRoomTicket, signal: AbortSignal, 
   room.onLeave(onLeave);
   room.onStateChange(onState);
   signal.addEventListener('abort', close, { once: true });
+  window.addEventListener('pagehide', close, { once: true });
   stateTimeout = setTimeout(timeoutRoom, 5_000);
   if (room.serializerId !== 'none') onState(room.state);
 }

@@ -1,0 +1,15 @@
+**/node_modules
+**/.next
+**/dist
+**/generated
+**/*.tsbuildinfo
+.git
+.env
+.env.*
+!.env.example
+test-results
+playwright-report
+coverage
+artifacts
+demo ui
+docx

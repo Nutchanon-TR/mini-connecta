@@ -1,0 +1,9 @@
+**/node_modules
+**/.next
+**/generated
+**/next-env.d.ts
+**/*.tsbuildinfo
+pnpm-lock.yaml
+apps/api/openapi.snapshot.json
+apps/web/src/lib/api.types.ts
+artifacts

@@ -24,7 +24,7 @@
 | Health และ rate limiting | แนวทาง health/monitoring และ Redis สำหรับ rate limit ที่แชร์ | `@nestjs/terminus` สำหรับ API readiness และ `@nestjs/throttler` สำหรับ Join/telemetry โดยเก็บตัวนับใน memory | ให้ Release 1 ทำงานใน API instance เดียว เปลี่ยนไปแชร์ตัวนับเมื่อมีหลาย instance |
 | บัญชีและห้อง | บัญชีมี @handle, วันเกิด และหลายห้อง | หนึ่ง avatar ต่อบัญชี และ Common Study Room ห้องเดียว | ครอบคลุม flow ของ Release 1 ขยายตาม PBI รอบถัดไป |
 | Realtime และ jobs | Colyseus พร้อม NestJS gateway, Redis และ BullMQ ตามงาน V2 | ใช้ Colyseus ถือ movement และ presence ในห้อง พร้อม LiveKit ส่งเสียง | เพิ่ม gateway, Redis และ BullMQ เมื่อเริ่มงาน DM, presence ข้าม instance หรือ background jobs |
-| Monitoring และ load test | Prometheus, Grafana, Loki, Alloy และ Alertmanager โดยแบบ V2 มีเครื่อง monitoring แยก | เริ่ม Compose profile บน VM คณะเครื่องเดียว เพิ่มการวัด Join/Voice ตามสภาพ UI และใช้ k6, Colyseus bots, LiveKit CLI ใน local | ลดจำนวน VM ที่ต้องใช้ช่วง playtest แยก monitoring เมื่อทรัพยากรหรือแนวทางคณะต้องการ |
+| Monitoring และ load test | Prometheus, Grafana, Loki, Alloy และ Alertmanager โดยแบบ V2 มีเครื่อง monitoring แยก | เริ่ม Compose profile บน VM คณะเครื่องเดียว ใช้ Prometheus, Grafana และ Alertmanager ดู log ผ่าน Docker เพิ่มการวัด Join/Voice ตามสภาพ UI และใช้ k6, Colyseus bots, LiveKit CLI ใน local | ลดจำนวน VM ที่ต้องใช้ช่วง playtest แยก monitoring เมื่อทรัพยากรหรือแนวทางคณะต้องการ |
 
 [Spec บัญชี V2](../../Project-StudyRoom3d/docs/v2/features/02-accounts.md) · [Backend/API](02-system-design/backend-api.md) · [Observability](02-system-design/observability.md)
 

@@ -86,6 +86,8 @@ export interface components {
         CurrentAccount: {
             user: {
                 id: string;
+                /** @description Present for guest sessions. */
+                isGuest?: boolean;
             };
             avatar: components["schemas"]["Avatar"] | null;
         };
@@ -118,7 +120,7 @@ export interface components {
             /** @enum {string} */
             phase: "start";
             /** @enum {string} */
-            kind: "join" | "voice";
+            kind: "join" | "voice" | "voice_connect";
             /** Format: uuid */
             attemptId: string;
         };
@@ -137,7 +139,7 @@ export interface components {
             /** @enum {string} */
             phase: "finish";
             /** @enum {string} */
-            kind: "voice";
+            kind: "voice" | "voice_connect";
             /** Format: uuid */
             attemptId: string;
             /** @enum {string} */

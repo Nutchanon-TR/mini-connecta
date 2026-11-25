@@ -4,7 +4,12 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./realtime": "./src/realtime.ts"
+    "./realtime": "./src/realtime.ts",
+    "./ticket": "./src/ticket.ts",
+    "./layout": "./src/layout.ts",
+    "./navigation": "./src/navigation.ts",
+    "./movement": "./src/movement.ts",
+    "./server-config": "./src/server-config.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

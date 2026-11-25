@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { requestStudyRoomTicket } from '@/features/discover/api';
 import { connectGame, joinErrorMessage, readJoinError, type ActiveGame } from './game-connection';
+import { startRoomAttempt } from './attempt';
 import { leavePreviewRoom, takeRoomTicket } from './preview-room';
 
 type GameStatus =
   | { kind: 'connecting' | 'reconnecting' }
-  | { kind: 'ready'; game: ActiveGame }
+  | { kind: 'ready'; game: ActiveGame; sceneReady: () => void }
   | { kind: 'disconnected'; message: string };
 
 export function useRoomGame({ onAccountChanged }: { onAccountChanged: () => void }) {
@@ -29,45 +30,57 @@ export function useRoomGame({ onAccountChanged }: { onAccountChanged: () => void
       await Promise.resolve();
       if (signal.aborted) return;
       const handoff = takeRoomTicket();
-      const attemptId = handoff?.attemptId ?? crypto.randomUUID();
+      const join = handoff?.attempt ?? startRoomAttempt('join');
+      const attemptId = join.attemptId;
+      signal.addEventListener('abort', () => join.finish('cancelled'), { once: true });
 
       for (let attempt = 0; attempt < 2; attempt++) {
-        const result = attempt === 0 && handoff
-          ? { kind: 'ticket-issued' as const, ticket: handoff.ticket }
-          : await requestStudyRoomTicket({ attemptId }, signal);
+        const result =
+          attempt === 0 && handoff
+            ? { kind: 'ticket-issued' as const, ticket: handoff.ticket }
+            : await requestStudyRoomTicket({ attemptId }, signal);
         if (signal.aborted) return;
 
         if (result.kind === 'sign-in-required' || result.kind === 'character-required') {
+          join.finish(result.kind === 'sign-in-required' ? 'auth_required' : 'avatar_required');
           onAccountChanged();
           leavePreviewRoom();
           return;
         }
         if (result.kind === 'retry') {
+          join.finish('failed');
           disconnected(result.message);
           return;
         }
         if (Date.parse(result.ticket.expiresAt) <= Date.now()) {
           if (attempt === 0) continue;
+          join.finish('failed');
           disconnected(joinErrorMessage('ticket_expired'));
           return;
         }
 
         try {
           await connectGame(result.ticket, signal, {
-            ready: game => setStatus({ kind: 'ready', game }),
+            ready: (game) =>
+              setStatus({ kind: 'ready', game, sceneReady: () => join.finish('success') }),
             reconnecting: () => setStatus({ kind: 'reconnecting' }),
-            disconnected: () => disconnected('Try again to return to the Study Room.'),
+            disconnected: () => {
+              join.finish('failed');
+              disconnected('Try again to return to the Study Room.');
+            },
           });
           return;
         } catch (error) {
-          if (attempt === 0 && readJoinError(error) === 'ticket_expired') continue;
+          const reason = readJoinError(error);
+          if (attempt === 0 && reason === 'ticket_expired') continue;
+          join.finish(reason === 'room_full' || reason === 'already_in_room' ? reason : 'failed');
           disconnected(joinErrorMessage(error));
           return;
         }
       }
     }
 
-    void connect().catch(error => disconnected(joinErrorMessage(error)));
+    void connect().catch((error) => disconnected(joinErrorMessage(error)));
     return () => controller.abort();
   }, [onAccountChanged, revision]);
 
@@ -79,7 +92,7 @@ export function useRoomGame({ onAccountChanged }: { onAccountChanged: () => void
   function reconnect() {
     current.current?.abort();
     setStatus({ kind: 'connecting' });
-    setRevision(value => value + 1);
+    setRevision((value) => value + 1);
   }
 
   function leave() {

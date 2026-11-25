@@ -1,14 +1,14 @@
 # Mini Connecta — แผน Release 1
 
-สถานะ **ขั้น 3.5 เสร็จแล้ว พร้อมเริ่มขั้น 3.6** · อัปเดต 21 พฤศจิกายน 2026
+สถานะ **ดำเนินงานถึงขั้น 6.3 ใน local** · อัปเดต 24 พฤศจิกายน 2026
 
 เป้าหมายคือทำ Study Room 3D รุ่นเล็กให้คนสองคนเปิดเว็บจากคนละเครื่อง เข้าห้องเดียวกัน เห็นกันเดิน และคุยตามระยะได้ ใช้โปรเจกต์นี้ฝึกทำระบบครบตั้งแต่ UI ถึงการ deploy บน VM และเก็บหลักฐานว่าระบบทำงานอย่างไรเมื่อมีโหลดหรือบริการล่ม
 
-**เส้นทางผู้ใช้** — Sign in → สร้างตัวละครครั้งแรก → Discover → Join Study Room → เดินและคุย → Leave กลับ Discover
+**เส้นทางผู้ใช้** — Landing → Sign in → สร้างตัวละครครั้งแรก → Discover → Join Study Room → เดินและคุย → Leave กลับ Discover
 
-- แถบนำทางมี Discover เป็นเมนูเดียว หน้า Discover แสดงการ์ด Study Room หนึ่งใบใน Common rooms และข้อความ “No open rooms yet.” ใน Open rooms ผู้ใช้เก่าข้ามหน้าสร้างตัวละครได้
-- ข้อเสนอสำหรับรอบนี้คือ Google Sign-in ช่องทางเดียว ตัวละครหนึ่งตัวต่อบัญชี และห้องจำกัดจำนวนคนตามผลทดสอบ เป้า playtest เริ่มต้น 15–20 คน
-- งานต่อยอดหลัง Release 1 ได้แก่ Guest, ลิงก์เข้าห้องโดยตรง, วันเกิดและ @handle, Bubbles, สร้างห้องและเปลี่ยนแผนที่, Friends, DM, เกม, ระบบชำระเงิน และ screen share
+- แถบนำทางมี Discover เป็นเมนูเดียว หน้า Discover แสดงการ์ด Study Room หนึ่งใบใน Common rooms และข้อความ “No open rooms yet.” ใน Open rooms ผู้ใช้เก่าข้ามหน้าสร้างตัวละครได้ เมนูบัญชีล่างซ้ายใช้แก้ตัวละคร เปลี่ยนธีม และออกจากระบบ
+- ข้อเสนอสำหรับรอบนี้คือ Google Sign-in หรือ Guest แล้วตั้งชื่อตัวละคร ตัวละครหนึ่งตัวต่อบัญชี และห้องจำกัดจำนวนคนตามผลทดสอบ เริ่มวาง playtest ที่ 15 คนตามรอบ local ที่ผ่านเกณฑ์ Join จากนั้นใช้ผล smoke บน VM ยืนยันอีกครั้ง
+- งานต่อยอดหลัง Release 1 ได้แก่ ลิงก์เข้าห้องโดยตรง, วันเกิดและ @handle, Bubbles, สร้างห้องและเปลี่ยนแผนที่, Friends, DM, เกม, ระบบชำระเงิน และ screen share
 - ทำ integration, E2E, load test และซ้อมกู้ระบบใน local หลัง deploy ให้ทำ smoke test บน VM เพื่อเช็กโดเมน, TLS, OAuth และเสียงข้ามเครือข่ายจริง
 
 ## Tech stack สำหรับ Release 1
@@ -21,12 +21,12 @@
 | Frontend | Next.js App Router, React, Tailwind CSS | Sign in, Character, Discover, Room HUD และ UI สำหรับสถานะการเชื่อมต่อ |
 | 3D | Three.js, React Three Fiber, assets จาก Study Room 3D | แสดงแผนที่ ตัวละคร และการเคลื่อนไหว |
 | REST API | NestJS (Express), OpenAPI, `@nestjs/swagger`, `openapi-typescript`, `openapi-fetch` | อ่าน session และตัวละคร บันทึกตัวละคร และออกตั๋วเข้าห้อง |
-| Auth | Better Auth + Prisma adapter, Google OAuth, DB-backed session | ลงชื่อเข้าใช้และออกจากระบบ ใช้ session cookie แบบ HttpOnly พร้อม Secure บน HTTPS |
+| Auth | Better Auth + Prisma adapter, Google OAuth, Anonymous plugin, DB-backed session | ลงชื่อเข้าใช้และออกจากระบบ ใช้ session cookie แบบ HttpOnly พร้อม Secure บน HTTPS |
 | Database | PostgreSQL 17, Prisma 7 และ Prisma Migrate | เก็บบัญชี, session, ตัวละคร และจัดการ schema migrations |
 | Multiplayer | Colyseus ผ่าน WebSocket | ตรวจตั๋วเข้าห้อง คุมความจุและตำแหน่งผู้เล่น ส่งสถานะให้ browser |
 | Voice | LiveKit self-hosted, LiveKit JS SDK และ Server SDK | ส่งเสียงผ่าน WebRTC ให้ game server ออก token หลังเข้าเกมสำเร็จ |
 | Reverse proxy และ deploy | Caddy, Docker Compose, Linux VM ของคณะ | HTTPS/WSS, ส่ง `/api` ไป API, เปิด media ports และรันบริการจาก image |
-| Observability | Prometheus, Grafana, Alertmanager, Loki, Alloy และ `@nestjs/terminus` สำหรับ readiness | เก็บ metrics และ logs ดู dashboard และแจ้งเตือน |
+| Observability | Prometheus, Grafana, Alertmanager และ `@nestjs/terminus` สำหรับ readiness | เก็บ metrics ดู dashboard และแจ้งเตือน ดู log ผ่าน Docker |
 | Quality และ CI | Prettier, ESLint, TypeScript, Vitest, Playwright, k6, Colyseus bots, LiveKit CLI, GitHub Actions และ Docker image bundle | ตรวจโค้ด ทดสอบผู้ใช้และโหลด และจัด release ตาม commit SHA |
 
 ใช้ `@nestjs/throttler` กับ endpoint ที่ออกตั๋ว Join และรับ telemetry ดู [แบบระบบขั้น 2](02-system-design/README.md) สำหรับ package ownership และเส้นทางของข้อมูล
@@ -67,7 +67,7 @@
 - [x] **3.3** ทำ OpenAPI snapshot จากแบบระบบเพื่อ generate types ด้วย `openapi-typescript` และใช้ `openapi-fetch` ใน `apps/web/src/lib/api.ts` ให้แต่ละ feature เรียกผ่าน client กลางและแปลง error เป็นสถานะของ UI เก็บ schema ของ realtime ที่ใช้ร่วมกันใน `packages/shared`
 - [x] **3.4** ทำ mock ให้ใช้ types จาก OpenAPI snapshot และคืน error ตาม contract เดียวกับ API จริง เช่น ไม่มี session, ไม่มี avatar และ join fail ให้สลับ mock ที่ชั้นเรียก API เพื่อให้ component ใช้ข้อมูลรูปแบบเดิม
 - [x] **3.5** เตรียมจุดเปิดและปิด Colyseus/LiveKit ใน feature ห้อง แยก lifecycle ของทั้งคู่ เมื่อ Leave ให้ cleanup connection, audio tracks และ input เมื่อ reload ให้โหลด session และ avatar ตาม flow เดิม
-- [ ] **3.6** ตรวจเส้นทางผู้ใช้ใหม่ ผู้ใช้เดิม และหน้า error ด้วย mock รัน typecheck และ lint ก่อนส่งต่อ
+- [x] **3.6** ตรวจเส้นทางผู้ใช้ใหม่ ผู้ใช้เดิม และหน้า error ด้วย mock รัน typecheck และ lint ก่อนส่งต่อ
 
 **Workspace** ใช้ package web, api, game, shared และ db ให้รัน pnpm และ Git จากราก Mini-Connecta
 
@@ -85,32 +85,38 @@
 
 ## 4. ทำ backend และต่อระบบจริงใน local
 
-- [ ] **4.1** ตั้ง NestJS บน Express และสร้าง Compose สำหรับ Postgres กับ LiveKit ใช้ local credentials และ health checks เขียน `.env.example` ด้วยค่าตัวอย่าง เริ่มเพิ่ม structured logs ตั้งแต่บริการแรก
+- [x] **4.1** ตั้ง NestJS บน Express และสร้าง Compose สำหรับ Postgres กับ LiveKit ใช้ local credentials และ health checks เขียน `.env.example` ด้วยค่าตัวอย่าง เริ่มเพิ่ม structured logs ตั้งแต่บริการแรก
 - [ ] **4.2** ต่อ Better Auth กับ Google OAuth ผ่าน Node handler และ Prisma adapter ให้ Prisma Migrate ดูแล schema ทั้งแอปกับ Auth ตั้ง redirect URI ให้ตรง local URL ทดสอบ sign-in, sign-out และเข้า route ที่ต้องใช้ session หลัง sign-out
-- [ ] **4.3** ทำ `GET /api/me` และ `PUT /api/me/avatar` แล้วสลับหน้า Character ไป API จริง ทดสอบเซฟซ้ำ, reload และ restart app เพื่อยืนยันว่าค่ามาจาก DB และยังมีตัวละครเดียวต่อบัญชี
-- [ ] **4.4** ต่อ Discover → API ออกตั๋ว → Colyseus join ใส่แผนที่ Study Room แล้วลองสอง browser contexts ให้เห็นกันเดิน ทดสอบห้องเต็ม, ตั๋วหมดอายุ, หลุดแล้วกลับ และ Leave แล้วคนอื่นเห็นผู้เล่นออก
-- [ ] **4.5** ต่อ LiveKit หลัง join ผ่าน ให้ game server ออก token เฉพาะห้องและ participant นั้น จับคู่ track กับตำแหน่งจาก Colyseus แล้วทดสอบ mute, เดินเข้า–ออกระยะ และกรณี LiveKit ล่มแต่ผู้เล่นยังเดินได้
-- [ ] **4.6** ใช้ `@nestjs/swagger` ออก OpenAPI จาก NestJS แล้วเทียบกับ snapshot และ regenerate types ตั้ง `@nestjs/throttler` สำหรับ Join/telemetry เพิ่ม metrics, `@nestjs/terminus` สำหรับ readiness และ logs ตาม contract จากขั้น 2 เขียน Dockerfile สำหรับ web/API/game และลองรันทั้ง stack ผ่าน Caddy ใน local จากฐานข้อมูลว่างและจากฐานข้อมูลที่มี avatar แล้ว ให้ migration มีผู้รันเพียงจุดเดียว
+- [x] **4.3** ทำ `GET /api/me` และ `PUT /api/me/avatar` แล้วสลับหน้า Character ไป API จริง ทดสอบเซฟซ้ำ, reload และ restart app เพื่อยืนยันว่าค่ามาจาก DB และยังมีตัวละครเดียวต่อบัญชี
+- [x] **4.4** ต่อ Discover → API ออกตั๋ว → Colyseus join ใส่แผนที่ Study Room แล้วลองสอง browser contexts ให้เห็นกันเดิน ทดสอบห้องเต็ม, ตั๋วหมดอายุ, หลุดแล้วกลับ และ Leave แล้วคนอื่นเห็นผู้เล่นออก
+- [x] **4.5** ต่อ LiveKit หลัง join ผ่าน ให้ game server ออก token เฉพาะห้องและ participant นั้น จับคู่ track กับตำแหน่งจาก Colyseus แล้วทดสอบ mute, เดินเข้า–ออกระยะ และกรณี LiveKit ล่มแต่ผู้เล่นยังเดินได้
+- [x] **4.6** ใช้ `@nestjs/swagger` ออก OpenAPI จาก NestJS แล้วเทียบกับ snapshot และ regenerate types ตั้ง `@nestjs/throttler` สำหรับ Join/telemetry เพิ่ม metrics, `@nestjs/terminus` สำหรับ readiness และ logs ตาม contract จากขั้น 2 เขียน Dockerfile สำหรับ web/API/game และลองรันทั้ง stack ผ่าน Caddy ใน local จากฐานข้อมูลว่างและจากฐานข้อมูลที่มี avatar แล้ว ให้ migration มีผู้รันเพียงจุดเดียว
+
+**ผลตรวจขั้น 4** local Compose ผ่าน Caddy และใช้ PostgreSQL, Colyseus กับ LiveKit จริง ทดสอบ route guard และ Sign-out ด้วย Better Auth fixture รอ Google OAuth client ของโปรเจกต์เพื่อยืนยัน callback กับ Google จริง
 
 **ผ่านเมื่อ** คนสองคน sign-in, เซฟตัวละคร, เข้าห้อง, เห็นกันเดิน และคุยได้บน local stack ที่รันผ่าน Compose จากนั้นค่อยเพิ่มโหลดในขั้น 5
 
 ## 5. เปิด monitoring แล้วทดสอบโหลดและการกู้ระบบ
 
-- [ ] **5.1** เปิด observability profile ของ Compose ทำ dashboard สำหรับ API, join, voice, game loop และทรัพยากร เช็กด้วย request และการเข้าห้องจริงว่า metrics เพิ่ม และดู log ของเหตุการณ์เดียวกันได้โดยไม่เก็บ token หรือข้อมูลผู้ใช้ใน labels
+- [x] **5.1** เปิด observability profile ของ Compose ทำ dashboard สำหรับ API, join, voice, game loop และทรัพยากร เช็กด้วย request และการเข้าห้องจริงว่า metrics เพิ่ม และดู log ของเหตุการณ์เดียวกันได้โดยไม่เก็บ token หรือข้อมูลผู้ใช้ใน labels
 - [ ] **5.2** เก็บ baseline ที่ผู้เล่นจริง 2 คน วัดเวลา Join, เสียง, movement และ FPS ทำ E2E สำหรับ flow หลักและ error ที่กำหนดไว้ ใช้ Chrome/Playwright แบบ muted สำหรับ automation และตรวจการได้ยินจริงแยกด้วยสองเครื่อง
-- [ ] **5.3** ยิง API ด้วย k6, จำลองการเดินด้วย Colyseus bots และจำลองผู้ส่ง–รับเสียงด้วย `lk perf` ไล่โหลด 5, 10, 20 และ 30 คนเทียบ baseline จากนั้นเทส workload รวมที่ 20 คน ให้มีทั้งเดิน เชื่อมเสียง และทยอยเข้า–ออกห้อง
-- [ ] **5.4** ซ้อม API/DB ล่ม, game restart, LiveKit ล่ม และ disk ใกล้เต็ม ตรวจว่า UI ตอบสนองอย่างไร dashboard เห็นอาการหรือไม่ และ alert ที่ตั้งไว้แจ้งและ resolve เมื่อบริการกลับมา
-- [ ] **5.5** สำรอง DB แล้ว restore ลง Postgres แยกใน local เช็กว่า avatar ยังอยู่และแอปอ่านข้อมูลได้ ซ้อมกลับ image ก่อนหน้า ใช้ schema ที่รองรับทั้งสองเวอร์ชัน หรือระบุขั้นตอนกู้ DB หาก migration ย้อนด้วย image อย่างเดียวไม่ได้
-- [ ] **5.6** จดสเปกเครื่อง, ระยะเวลา, จำนวนตัวอย่าง, p95, อัตราผ่าน และโหลดสูงสุดที่ยังผ่านเกณฑ์ แยกคอขวดระหว่างเครื่องรัน load generator, เซิร์ฟเวอร์ และเครื่องผู้เล่น ถ้า 20 คนยังไม่ผ่าน ให้แก้แล้วรันซ้ำ หรือกำหนดขนาด playtest ตามผลที่ผ่านจริง
+- [x] **5.3** ยิง API ด้วย k6, จำลองการเดินด้วย Colyseus bots และจำลองผู้ส่ง–รับเสียงด้วย `lk perf` ไล่โหลด 5, 10, 20 และ 30 คนเทียบ baseline จากนั้นเทส workload รวมที่ 20 คน ให้มีทั้งเดิน เชื่อมเสียง และทยอยเข้า–ออกห้อง
+- [x] **5.4** ซ้อม API/DB ล่ม, game restart, LiveKit ล่ม และ disk ใกล้เต็ม ตรวจว่า UI ตอบสนองอย่างไร dashboard เห็นอาการหรือไม่ และ alert ที่ตั้งไว้แจ้งและ resolve เมื่อบริการกลับมา
+- [x] **5.5** สำรอง DB แล้ว restore ลง Postgres แยกใน local เช็กว่า avatar ยังอยู่และแอปอ่านข้อมูลได้ ซ้อมกลับ image ก่อนหน้า ใช้ schema ที่รองรับทั้งสองเวอร์ชัน หรือระบุขั้นตอนกู้ DB หาก migration ย้อนด้วย image อย่างเดียวไม่ได้
+- [x] **5.6** จดสเปกเครื่อง, ระยะเวลา, จำนวนตัวอย่าง, p95, อัตราผ่าน และโหลดสูงสุดที่ยังผ่านเกณฑ์ แยกคอขวดระหว่างเครื่องรัน load generator, เซิร์ฟเวอร์ และเครื่องผู้เล่น ถ้า 20 คนยังไม่ผ่าน ให้แก้แล้วรันซ้ำ หรือกำหนดขนาด playtest ตามผลที่ผ่านจริง
+
+**รายงานการทดสอบ** Local 15 คนเข้าได้ภายใน 5 วินาทีครบ 15/15 ส่วนรอบ 20 คน Join p95 5.07 วินาที ดู [Local Validation](local-validation.th.md) สำหรับตัวเลขและผลกู้ระบบ การฟังจริงจากสองเครื่องยังรอทดสอบกับอุปกรณ์
 
 **ผ่านเมื่อ** มีรายงาน local load test, ผลซ้อมล่มและกู้ระบบ และตัวเลขรองรับขนาด playtest ที่เลือก ผล local ใช้ตัดสินการทดสอบในสภาพแวดล้อมนั้น ส่วนเพดานของ VM ต้องอาศัยผลวัดบน VM แยกต่างหาก
 
 ## 6. Review แล้วส่งขึ้น GitHub
 
-- [ ] **6.1** ให้ AI ตรวจ diff เทียบ scope และ contract โดยเน้น route guard, สิทธิ์ join, session และ token, การ cleanup, migration, config และไฟล์ที่อาจมี secret ให้ผู้ดูแลอ่านและตัดสินประเด็นที่ review พบ
-- [ ] **6.2** แก้ข้อที่พบและรัน format check, typecheck, lint, unit/integration, build และ E2E ซ้ำ บันทึกผลที่ตรวจได้และรายการที่ยังรอตรวจ เช่น DNS และสิทธิ์ไมค์ผ่านโดเมน VM
-- [ ] **6.3** เตรียมขั้นตอน start, stop, health check, backup/restore, deploy และ rollback ตรวจ Git diff และยืนยันว่า path ที่จะ push มีเฉพาะ Mini Connecta กับไฟล์ที่ตั้งใจส่ง
+- [x] **6.1** ให้ AI ตรวจ diff เทียบ scope และ contract โดยเน้น route guard, สิทธิ์ join, session และ token, การ cleanup, migration, config และไฟล์ที่อาจมี secret ให้ผู้ดูแลอ่านและตัดสินประเด็นที่ review พบ
+- [x] **6.2** แก้ข้อที่พบและรัน format check, typecheck, lint, unit/integration, build และ E2E ซ้ำ บันทึกผลที่ตรวจได้และรายการที่ยังรอตรวจ เช่น DNS และสิทธิ์ไมค์ผ่านโดเมน VM
+- [x] **6.3** เตรียมขั้นตอน start, stop, health check, backup/restore, deploy และ rollback ตรวจ Git diff และยืนยันว่า path ที่จะ push มีเฉพาะ Mini Connecta กับไฟล์ที่ตั้งใจส่ง
 - [ ] **6.4** เมื่อ owner อนุมัติให้ push ใช้ GitHub Actions รัน checks รวมการตรวจ OpenAPI และ generated types แล้ว build image ของ web/API/game ตาม commit SHA พร้อม image bundle และ checksum ที่ใช้ส่งเข้า VM คณะผ่านช่องทางที่คณะอนุญาต หากมี private registry ของคณะให้ใช้ registry ได้
+
+**เอกสารส่งต่อ** [Runbook](runbook.th.md) · [ผล Review และรายการรอตรวจ](local-validation.th.md#review-ขั้น-6163) · [Architecture Summary](architecture-summary.th.md)
 
 **ผ่านเมื่อ** มี commit ที่ผ่าน CI, image ที่นำเข้า VM คณะได้ และขั้นตอน deploy/rollback ที่อ้างถึง release เดียวกัน จากนั้นให้ owner เริ่มขั้น 7
 

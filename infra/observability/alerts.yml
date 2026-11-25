@@ -1,0 +1,26 @@
+groups:
+  - name: mini-connecta
+    rules:
+      - alert: MiniServiceDown
+        expr: up{job=~"api|game|livekit|node"} == 0
+        for: 1m
+        labels: { severity: warning }
+        annotations:
+          summary: '{{ $labels.job }} scrape has failed for at least one minute'
+      - alert: MiniAttemptErrors
+        expr: |
+          sum by (kind) (increase(mini_room_attempts_total{kind=~"join|voice",outcome=~"failed|missing_result|timeout"}[5m]))
+          / sum by (kind) (increase(mini_room_attempts_total{kind=~"join|voice",outcome!~"cancelled|room_full|already_in_room|auth_required|avatar_required"}[5m])) > 0.05
+          and sum by (kind) (increase(mini_room_attempts_total{kind=~"join|voice",outcome!~"cancelled|room_full|already_in_room|auth_required|avatar_required"}[5m])) >= 10
+        for: 2m
+        labels: { severity: warning }
+        annotations:
+          summary: '{{ $labels.kind }} failure rate exceeds 5% of eligible attempts'
+      - alert: MiniDiskSpaceLow
+        expr: |
+          node_filesystem_avail_bytes{fstype!~"overlay|tmpfs|squashfs|nsfs"} /
+          (node_filesystem_size_bytes > 0) < 0.20 and node_filesystem_readonly == 0
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: '{{ $labels.mountpoint }} has less than 20% free space'

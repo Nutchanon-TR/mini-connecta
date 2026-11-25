@@ -12,17 +12,18 @@
 | `packages/db` | Prisma schema, migrations และ client สำหรับ API |
 | `apps/web` | Feature modules สำหรับ auth, avatar, discover, room และ voice เรียก HTTP client กลางที่ `src/lib/api.ts` |
 
-ขั้น 3 ใช้ [OpenAPI snapshot](../../apps/api/openapi.snapshot.json) ของ REST contract ด้านล่าง ใช้ `openapi-typescript` สร้าง types ให้ mock และใช้ `openapi-fetch` เป็น HTTP client กลาง ขั้น 4 ให้ NestJS DTO และ `@nestjs/swagger` ออก spec จาก routes จริง แล้ว generate types จาก spec นั้น ตรวจ contract และผล generate ใน CI ใช้ Nest `ValidationPipe` กับ REST และ Zod กับข้อความ realtime เลี่ยงการส่ง Prisma row หรือ cookie เป็น DTO
+ขั้น 3 ใช้ [OpenAPI snapshot](../../apps/api/openapi.snapshot.json) ของ REST contract ด้านล่าง ใช้ `openapi-typescript` สร้าง types ให้ mock และใช้ `openapi-fetch` เป็น HTTP client กลาง ขั้น 4 ให้ NestJS DTO และ `@nestjs/swagger` ออก spec จาก routes จริง แล้ว generate types จาก spec นั้น ตรวจ contract และผล generate ใน CI ใช้ Zod ตรวจ body ของ REST และ realtime ที่ขอบของแต่ละบริการ เลี่ยงการส่ง Prisma row หรือ cookie เป็น DTO
 
 `pnpm --filter @mini-connecta/web api:generate` สร้าง types จาก snapshot และ `pnpm --filter @mini-connecta/web api:check` ตรวจว่าผล generate ตรงกัน ทำงานจากราก Mini-Connecta
 
 ## โหมดเรียก API ระหว่างพัฒนา
 
-ค่าเริ่มต้นคือ mock transport ตอบทั้งสี่ route ด้วย types และ error codes จาก OpenAPI UI ใช้ feature API และ typed client กลาง ตั้ง `NEXT_PUBLIC_API_MODE=real` แล้วรัน dev ใหม่หรือ build ใหม่เพื่อส่ง request ไป `/api/...` บน origin เดิม เมื่อมี backend ให้ตั้ง routing ของ Caddy ตามแบบระบบ ส่วน Google OAuth จริงอยู่ในขั้น 4.2 และการจองที่นั่งของ Colyseus อยู่ในขั้นเชื่อมต่อห้อง
+ค่าเริ่มต้นคือ mock transport ตอบทั้งสี่ route ด้วย types และ error codes จาก OpenAPI UI ใช้ feature API และ typed client กลาง ตั้ง `NEXT_PUBLIC_API_MODE=real` แล้วรัน dev ใหม่หรือ build ใหม่เพื่อส่ง request ไป `/api/...` บน origin เดิม Compose build เว็บในโหมด real ให้ Caddy ส่ง request ไป NestJS และ Game ดูคำสั่งใน [Runbook](../runbook.th.md) Google OAuth ต้องตั้ง credentials ของ environment นั้น
 
 ## Auth และ HTTP contract
 
-- ต่อ Better Auth Node handler ที่ `/api/auth/*` บน Express ก่อน JSON body parser ให้ NestJS จัดการ validation ของ app routes และให้ Web ใช้ Better Auth client สำหรับ sign-in/sign-out Better Auth ใช้ Google ช่องทางเดียว เปิด callback ของ local และ VM ตาม [Deployment](deployment.md) เมื่อ OAuth สำเร็จให้ redirect ไปจุดเริ่มแอป แล้วใช้ `GET /api/me` ตัดสินหน้า
+- ต่อ Better Auth Node handler ที่ `/api/auth/*` บน Express ก่อน JSON body parser ให้ NestJS routes เรียก schema validation ก่อนจัดการข้อมูล และให้ Web ใช้ Better Auth client สำหรับ sign-in/sign-out Better Auth รองรับ Google และ Guest ผ่าน Anonymous plugin เปิด callback ของ local และ VM ตาม [Deployment](deployment.md) เมื่อ OAuth สำเร็จให้ redirect ไปจุดเริ่มแอป แล้วใช้ `GET /api/me` ตัดสินหน้า
+- `POST /api/auth/sign-in/anonymous` ออก session ให้ Guest ผ่าน Better Auth จำกัด 20 ครั้งต่อนาทีต่อ IP จาก proxy `GET /api/me` ส่ง `user.isGuest` สำหรับ Guest แล้วใช้ flow สร้าง avatar และเข้าห้องเดิม Guest ออกจากระบบผ่าน `POST /api/auth/delete-anonymous-user` เพื่อล้างบัญชีและตัวละครรอบนั้น
 - NestJS guard ตรวจ Better Auth session จาก cookie ในทุก route สำหรับบัญชี ตั้ง HttpOnly และ Secure บน HTTPS ใช้ same origin และตรวจ Origin สำหรับ request ที่แก้สถานะของแอป ให้ Better Auth จัดการ callback/state ของ OAuth
 - ออกจากระบบผ่าน Better Auth แล้วล้าง session state ของ Web ถ้าอยู่ในห้อง ให้ Client ปิด Game และ LiveKit ก่อน sign out UI ใช้ `401 unauthorized` เป็นทางกลับหน้า Sign in
 - Responses ของ session, avatar และ join ใช้ `Cache-Control: no-store` Route ที่เปลี่ยนข้อมูลรับ JSON และ validate ที่ขอบ API ใช้ `@nestjs/throttler` กับ Join และ telemetry โดยจำกัดตาม session โดยเริ่มจาก storage ใน memory ของ API instance เดียว
