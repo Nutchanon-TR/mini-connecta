@@ -1,5 +1,7 @@
 services:
   caddy:
+    environment:
+      CADDY_DEFAULT_SNI: ${CADDY_DEFAULT_SNI:-localhost}
     ports: !override
       - '80:80'
       - '443:443'

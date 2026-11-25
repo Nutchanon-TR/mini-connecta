@@ -1,9 +1,27 @@
+{
+  default_sni {$CADDY_DEFAULT_SNI:localhost}
+}
+
 {$WEB_SITE} {
   encode gzip
   @private path /metrics /health/* /internal/*
   respond @private 404
   handle /api/* {
     reverse_proxy api:2568
+  }
+  handle_path /game/* {
+    @gamePrivate path /metrics /health /health/* /internal /internal/*
+    respond @gamePrivate 404
+    reverse_proxy game:2567
+  }
+  handle_path /livekit/* {
+    @livekitSignal path /rtc /rtc/*
+    handle @livekitSignal {
+      reverse_proxy livekit:7880
+    }
+    handle {
+      respond 404
+    }
   }
   handle {
     reverse_proxy web:3000

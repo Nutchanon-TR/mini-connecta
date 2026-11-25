@@ -37,7 +37,7 @@ services:
 
   migrate:
     image: mini-connecta-api:${RELEASE_TAG:-local}
-    build: { context: ., target: api }
+    pull_policy: never
     environment:
       DATABASE_URL: ${MIGRATION_DATABASE_URL:-${DATABASE_URL}}
     command: [pnpm, --filter, '@mini-connecta/db', migrate]
